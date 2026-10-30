@@ -17,7 +17,7 @@ export function Toaster({ children }: { children?: ReactNode }) {
   return (
     <div
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-[60] flex flex-col items-center gap-2 md:bottom-6 [&>*]:pointer-events-auto"
+      className="pointer-events-none fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 flex flex-col items-center gap-2 md:bottom-6 [&>*]:pointer-events-auto"
     >
       {children}
       {toasts.map((t) => {

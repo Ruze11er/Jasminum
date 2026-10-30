@@ -13,3 +13,4 @@ export { PageHeader } from './components/PageHeader';
 export { Toaster } from './components/Toast';
 export { toast, useToasts } from './components/toastStore';
 export { ConfirmDialog } from './components/ConfirmDialog';
+export { Select } from './components/Select';

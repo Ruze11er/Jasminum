@@ -211,12 +211,13 @@
   }
 }
 @keyframes zoom-in {
+  /* Scale only: centering comes from the element's own translate, so it stays put after the animation. */
   from {
     opacity: 0;
-    transform: translate(-50%, -48%) scale(0.96);
+    transform: scale(0.96);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: scale(1);
   }
 }

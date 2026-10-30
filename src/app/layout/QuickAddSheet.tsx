@@ -2,6 +2,9 @@ import { useNavigate } from 'react-router';
 import { CalendarPlus, FileUp, ListPlus, SquarePen, type LucideIcon } from 'lucide-react';
 import { Sheet } from '@/design-system';
 import { useUiStore } from '@/stores/uiStore';
+import { useTaskEditor } from '@/features/tasks/editorStore';
+import { clock } from '@/lib/clock';
+import { localDateOf } from '@/lib/dates';
 
 const actions: { label: string; hint: string; icon: LucideIcon; to: string; tone: string }[] = [
   {
@@ -39,6 +42,7 @@ export function QuickAddSheet() {
   const open = useUiStore((s) => s.quickAddOpen);
   const setOpen = useUiStore((s) => s.setQuickAddOpen);
   const navigate = useNavigate();
+  const openTask = useTaskEditor((s) => s.openNew);
 
   return (
     <Sheet
@@ -54,7 +58,12 @@ export function QuickAddSheet() {
             type="button"
             onClick={() => {
               setOpen(false);
-              navigate(to);
+              if (label === 'Task') {
+                // Open the task form right away, dated today.
+                openTask({ dueDate: localDateOf(clock.now()) });
+              } else {
+                navigate(to);
+              }
             }}
             className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-4 text-left transition-shadow hover:shadow-soft-md"
           >

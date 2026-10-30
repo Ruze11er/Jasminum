@@ -1,7 +1,8 @@
-import { CalendarHeart, Lightbulb, ListChecks, Quote } from 'lucide-react';
-import { Card, CardHeader, EmptyState, ProgressRing, Sparkle } from '@/design-system';
+import { Lightbulb, Quote } from 'lucide-react';
+import { Card, CardHeader, EmptyState, Sparkle } from '@/design-system';
 import { useSetting } from '@/data/repos/settings';
 import { clock } from '@/lib/clock';
+import { TodayCard } from './TodayCard';
 
 function greeting(hour: number) {
   if (hour < 5) return 'Hello, night owl';
@@ -44,23 +45,7 @@ export default function HomePage() {
       </Card>
 
       <div className="grid gap-5 md:grid-cols-[1.4fr_1fr]">
-        <Card>
-          <CardHeader title="Today" icon={<ListChecks />} />
-          <div className="flex items-center gap-4 rounded-xl bg-surface-muted p-3">
-            <ProgressRing value={0} size={56} stroke={6} label="0 of 0 tasks done">
-              0/0
-            </ProgressRing>
-            <p className="text-sm text-fg-muted">
-              Nothing planned yet. Your tasks for today will show up here.
-            </p>
-          </div>
-          <EmptyState
-            className="py-6"
-            icon={<CalendarHeart />}
-            title="A fresh, calm day"
-            description="Tap + to add a task or event."
-          />
-        </Card>
+        <TodayCard />
 
         <Card>
           <CardHeader title="Insights" icon={<Lightbulb />} />

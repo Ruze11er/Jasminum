@@ -32,7 +32,7 @@ export function Sheet({
             // phone: bottom sheet
             'inset-x-0 bottom-0 rounded-t-3xl pb-[max(1rem,env(safe-area-inset-bottom))] data-[state=open]:animate-sheet-up',
             // tablet/desktop: centered dialog
-            'md:inset-x-auto md:bottom-auto md:top-1/2 md:left-1/2 md:w-full md:max-w-lg md:rounded-3xl md:pb-0 md:data-[state=open]:animate-zoom-in',
+            'md:inset-x-auto md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg md:rounded-3xl md:pb-0 md:data-[state=open]:animate-zoom-in',
             className,
           )}
         >
@@ -58,7 +58,7 @@ export function Sheet({
               <X className="size-5" />
             </Dialog.Close>
           </div>
-          <div className="overflow-y-auto px-5 pb-4 md:px-6 md:pb-6">{children}</div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 md:px-6 md:pb-6">{children}</div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

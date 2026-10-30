@@ -2,6 +2,7 @@ import type { Table } from 'dexie';
 import { clock, DAY_MS } from '@/lib/clock';
 import { categoriesRepo } from './repos/categories';
 import { tagsRepo } from './repos/tags';
+import { tasksRepo } from './repos/tasks';
 import type { BaseEntity, EntityType } from './types';
 import { db } from './db';
 
@@ -23,6 +24,14 @@ const named = (e: BaseEntity) => (e as unknown as { name: string }).name;
  * (tasks, events, notes, folders, documents) once its repository exists.
  */
 export const trashSources: TrashSource[] = [
+  {
+    type: 'task',
+    label: 'Task',
+    table: () => db.tasks as unknown as Table<BaseEntity, string>,
+    title: (e) => (e as unknown as { title: string }).title,
+    restore: tasksRepo.restore,
+    purge: tasksRepo.purge,
+  },
   {
     type: 'tag',
     label: 'Tag',

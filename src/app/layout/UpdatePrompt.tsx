@@ -1,6 +1,9 @@
+import { useEffect } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { CloudOff, RefreshCw } from 'lucide-react';
 import { Button } from '@/design-system';
+
+const OFFLINE_NOTICE_MS = 6000;
 
 /**
  * Tells the user when a new version is ready, and when the app is ready to work offline.
@@ -12,6 +15,14 @@ export function UpdatePrompt() {
     offlineReady: [offlineReady, setOfflineReady],
     updateServiceWorker,
   } = useRegisterSW();
+
+  // "Ready to work offline" is just information: hide it on its own so it never sits on
+  // top of the page. "New version" stays until the user decides.
+  useEffect(() => {
+    if (!offlineReady || needRefresh) return;
+    const timer = setTimeout(() => setOfflineReady(false), OFFLINE_NOTICE_MS);
+    return () => clearTimeout(timer);
+  }, [offlineReady, needRefresh, setOfflineReady]);
 
   if (!needRefresh && !offlineReady) return null;
 

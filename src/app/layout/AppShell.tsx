@@ -1,6 +1,7 @@
-import { Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { Outlet, ScrollRestoration } from 'react-router';
 import { useThemeSync } from '@/design-system/theme';
+import { useTaskEditor } from '@/features/tasks/editorStore';
 import { Sidebar } from './Sidebar';
 import { BottomNav, MobileHeader, QuickAddFab } from './MobileNav';
 import { QuickAddSheet } from './QuickAddSheet';
@@ -8,8 +9,16 @@ import { UpdatePrompt } from './UpdatePrompt';
 import { DataStatusScreen } from './DataStatusScreen';
 import { Toaster } from '@/design-system';
 
+// The task form is only downloaded the first time it's opened.
+const TaskEditorSheet = lazy(() => import('@/features/tasks/editor/TaskEditorSheet'));
+
 export function AppShell() {
   useThemeSync();
+  const editorOpen = useTaskEditor((s) => s.open);
+  const [editorLoaded, setEditorLoaded] = useState(false);
+  // Keep it mounted after first use so its close animation can play.
+  if (editorOpen && !editorLoaded) setEditorLoaded(true);
+
   return (
     <div className="min-h-dvh md:flex">
       <a
@@ -34,6 +43,11 @@ export function AppShell() {
       <BottomNav />
       <QuickAddFab />
       <QuickAddSheet />
+      {editorLoaded && (
+        <Suspense fallback={null}>
+          <TaskEditorSheet />
+        </Suspense>
+      )}
       <Toaster>
         <UpdatePrompt />
       </Toaster>

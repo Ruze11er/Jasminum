@@ -52,5 +52,7 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
     css: false,
+    // UI tests that type and click can exceed the 5s default when the machine is busy.
+    testTimeout: 15_000,
   },
 });

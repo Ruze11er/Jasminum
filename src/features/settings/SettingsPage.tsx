@@ -4,6 +4,7 @@ import { Card, CardHeader, PageHeader, SegmentedControl } from '@/design-system'
 import { useUiStore, type ThemePreference } from '@/stores/uiStore';
 import { ProfileCard } from './ProfileCard';
 import { StorageCard } from './StorageCard';
+import { OrganizeCard } from './OrganizeCard';
 
 export default function SettingsPage() {
   const theme = useUiStore((s) => s.theme);
@@ -36,6 +37,8 @@ export default function SettingsPage() {
             />
           </div>
         </Card>
+
+        <OrganizeCard />
 
         <StorageCard />
 
