@@ -10,3 +10,6 @@ export { ProgressRing } from './components/ProgressRing';
 export { EmptyState, Sparkle } from './components/EmptyState';
 export { Sheet } from './components/Sheet';
 export { PageHeader } from './components/PageHeader';
+export { Toaster } from './components/Toast';
+export { toast, useToasts } from './components/toastStore';
+export { ConfirmDialog } from './components/ConfirmDialog';

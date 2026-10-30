@@ -1,7 +1,9 @@
 import { Link } from 'react-router';
-import { ChevronRight, Info, Monitor, Moon, Palette, Sun } from 'lucide-react';
+import { ChevronRight, Database, Info, Monitor, Moon, Palette, Sun, Trash2 } from 'lucide-react';
 import { Card, CardHeader, PageHeader, SegmentedControl } from '@/design-system';
 import { useUiStore, type ThemePreference } from '@/stores/uiStore';
+import { ProfileCard } from './ProfileCard';
+import { StorageCard } from './StorageCard';
 
 export default function SettingsPage() {
   const theme = useUiStore((s) => s.theme);
@@ -11,6 +13,8 @@ export default function SettingsPage() {
     <>
       <PageHeader title="Settings" />
       <div className="space-y-5">
+        <ProfileCard />
+
         <Card>
           <CardHeader title="Appearance" icon={<Palette />} />
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -31,6 +35,23 @@ export default function SettingsPage() {
               ]}
             />
           </div>
+        </Card>
+
+        <StorageCard />
+
+        <Card>
+          <CardHeader title="Data" icon={<Database />} />
+          <Link
+            to="/trash"
+            className="flex items-center gap-3 rounded-xl px-1 py-2.5 font-semibold hover:text-link"
+          >
+            <Trash2 className="size-5 text-fg-muted" aria-hidden="true" />
+            <span className="flex-1">Trash</span>
+            <ChevronRight className="size-4 text-fg-muted" aria-hidden="true" />
+          </Link>
+          <p className="mt-1 text-sm text-fg-muted">
+            Backup, restore and export arrive in a later update.
+          </p>
         </Card>
 
         <Card>

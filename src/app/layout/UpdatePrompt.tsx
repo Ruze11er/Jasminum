@@ -18,7 +18,7 @@ export function UpdatePrompt() {
   return (
     <div
       role="status"
-      className="fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 mx-auto flex max-w-md items-center gap-3 rounded-2xl border border-line bg-surface-raised p-4 shadow-soft-lg md:bottom-6"
+      className="flex w-full max-w-md animate-fade-in items-center gap-3 rounded-2xl border border-line bg-surface-raised p-4 shadow-soft-lg"
     >
       <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-fg">
         {needRefresh ? <RefreshCw className="size-5" /> : <CloudOff className="size-5" />}

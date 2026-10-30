@@ -22,6 +22,7 @@ export const routes: RouteObject[] = [
       { path: 'library', lazy: page(() => import('@/features/library/LibraryPage')) },
       { path: 'insights', lazy: page(() => import('@/features/insights/InsightsPage')) },
       { path: 'settings', lazy: page(() => import('@/features/settings/SettingsPage')) },
+      { path: 'trash', lazy: page(() => import('@/features/trash/TrashPage')) },
       { path: 'design', lazy: page(() => import('@/features/design-gallery/DesignGalleryPage')) },
       { path: '*', element: <NotFoundPage /> },
     ],

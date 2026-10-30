@@ -5,6 +5,8 @@ import { Sidebar } from './Sidebar';
 import { BottomNav, MobileHeader, QuickAddFab } from './MobileNav';
 import { QuickAddSheet } from './QuickAddSheet';
 import { UpdatePrompt } from './UpdatePrompt';
+import { DataStatusScreen } from './DataStatusScreen';
+import { Toaster } from '@/design-system';
 
 export function AppShell() {
   useThemeSync();
@@ -32,7 +34,10 @@ export function AppShell() {
       <BottomNav />
       <QuickAddFab />
       <QuickAddSheet />
-      <UpdatePrompt />
+      <Toaster>
+        <UpdatePrompt />
+      </Toaster>
+      <DataStatusScreen />
       <ScrollRestoration />
     </div>
   );

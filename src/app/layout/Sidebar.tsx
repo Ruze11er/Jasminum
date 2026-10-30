@@ -3,7 +3,7 @@ import { PanelLeftClose, PanelLeftOpen, Plus } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { useUiStore } from '@/stores/uiStore';
 import { LogoMark } from '../Logo';
-import { mainNav, settingsNav, type NavItem } from '../navigation';
+import { mainNav, settingsNav, trashNav, type NavItem } from '../navigation';
 
 /**
  * Tablet: slim icon rail. Desktop: full sidebar with labels (collapsible to the rail).
@@ -55,6 +55,7 @@ export function Sidebar() {
       </div>
 
       <div className="flex flex-col gap-1 border-t border-line pt-3">
+        <SidebarLink item={trashNav} collapsed={collapsed} />
         <SidebarLink item={settingsNav} collapsed={collapsed} />
         <button
           type="button"

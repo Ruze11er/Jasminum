@@ -6,6 +6,7 @@ import {
   ListChecks,
   NotebookPen,
   Settings,
+  Trash2,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -25,6 +26,9 @@ export const mainNav: NavItem[] = [
   { to: '/library', label: 'Library', icon: Library, inBottomBar: true },
   { to: '/insights', label: 'Insights', icon: Lightbulb, inBottomBar: false },
 ];
+
+/** Desktop sidebar only; on phones the Trash is reached from Settings → Data. */
+export const trashNav: NavItem = { to: '/trash', label: 'Trash', icon: Trash2, inBottomBar: false };
 
 export const settingsNav: NavItem = {
   to: '/settings',

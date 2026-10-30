@@ -1,5 +1,7 @@
 import { CalendarHeart, Lightbulb, ListChecks, Quote } from 'lucide-react';
 import { Card, CardHeader, EmptyState, ProgressRing, Sparkle } from '@/design-system';
+import { useSetting } from '@/data/repos/settings';
+import { clock } from '@/lib/clock';
 
 function greeting(hour: number) {
   if (hour < 5) return 'Hello, night owl';
@@ -9,7 +11,8 @@ function greeting(hour: number) {
 }
 
 export default function HomePage() {
-  const now = new Date();
+  const profile = useSetting('profile');
+  const now = new Date(clock.now());
   const dateLabel = new Intl.DateTimeFormat(undefined, {
     weekday: 'long',
     month: 'long',
@@ -22,6 +25,7 @@ export default function HomePage() {
         <p className="text-sm font-semibold text-fg-muted">{dateLabel}</p>
         <h1 className="mt-1 flex items-center gap-2 text-2xl md:text-3xl">
           {greeting(now.getHours())}
+          {profile.displayName && `, ${profile.displayName}`}
           <Sparkle className="size-5 text-pink-300" />
         </h1>
       </header>
