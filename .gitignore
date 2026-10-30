@@ -1,0 +1,14 @@
+node_modules
+dist
+dev-dist
+coverage
+playwright-report
+test-results
+*.local
+.DS_Store
+
+# Local-only docs (not pushed to GitHub)
+CLAUDE.md
+CHANGELOG.md
+docs/PLAN.md
+App Plan.pdf

@@ -1,0 +1,222 @@
+@import 'tailwindcss';
+
+/* `dark:` utilities follow the resolved theme class set by the app (see applyTheme). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------- Semantic tokens: light ---------- */
+:root {
+  color-scheme: light;
+  --bg: #fffbfc;
+  --surface: #ffffff;
+  --surface-muted: #fdf4f7;
+  --surface-raised: #ffffff;
+  --line: #f3dce4;
+  --line-strong: #e9c4d2;
+  --fg: #3a2a31;
+  --fg-muted: #6e5a64;
+  --fg-subtle: #a8949d;
+  --primary: #d13d72;
+  --primary-hover: #b02a5b;
+  --on-primary: #ffffff;
+  --primary-soft: #ffe4ee;
+  --primary-soft-hover: #ffccdd;
+  --primary-soft-fg: #8a1f47;
+  --brand: #e85a8a;
+  --link: #b02a5b;
+  --ring: #ffccdd;
+  --success: #2e9e6b;
+  --success-soft: #e3f6ec;
+  --warning: #b8740f;
+  --warning-soft: #fdf1dc;
+  --danger: #d93a4a;
+  --danger-soft: #fde6e8;
+  --info: #4f7fe0;
+  --info-soft: #e5edfc;
+  --shadow-color: 176 42 91;
+}
+
+/* ---------- Semantic tokens: dark ----------
+   Set on <html class="dark"> by applyTheme() for "dark", or for "system" when the OS is dark. */
+:root.dark {
+  color-scheme: dark;
+  --bg: #1e1519;
+  --surface: #2a1e24;
+  --surface-muted: #241a1f;
+  --surface-raised: #352730;
+  --line: #4a3540;
+  --line-strong: #5e4552;
+  --fg: #f8e9ef;
+  --fg-muted: #c9aebb;
+  --fg-subtle: #8f7a85;
+  --primary: #f48fb1;
+  --primary-hover: #ffa9c6;
+  --on-primary: #2a1e24;
+  --primary-soft: #4a2636;
+  --primary-soft-hover: #5c2f43;
+  --primary-soft-fg: #ffccdd;
+  --brand: #f48fb1;
+  --link: #f7a8c3;
+  --ring: #a3365f;
+  --success: #5fcf9a;
+  --success-soft: #1f3a2d;
+  --warning: #f0b55a;
+  --warning-soft: #3d2e17;
+  --danger: #ff7b88;
+  --danger-soft: #45222a;
+  --info: #8eb0f5;
+  --info-soft: #222f4a;
+  --shadow-color: 0 0 0;
+}
+
+/* ---------- Tailwind theme ---------- */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-raised: var(--surface-raised);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-on-primary: var(--on-primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-soft-hover: var(--primary-soft-hover);
+  --color-primary-soft-fg: var(--primary-soft-fg);
+  --color-brand: var(--brand);
+  --color-link: var(--link);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --shadow-soft-sm: 0 1px 2px rgb(var(--shadow-color) / 0.06);
+  --shadow-soft-md: 0 4px 12px rgb(var(--shadow-color) / 0.08);
+  --shadow-soft-lg: 0 12px 32px rgb(var(--shadow-color) / 0.12);
+}
+
+@theme {
+  --font-sans: 'Nunito', ui-rounded, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Quicksand', 'Nunito', ui-rounded, system-ui, sans-serif;
+
+  /* Brand pink scale */
+  --color-pink-50: #fff5f8;
+  --color-pink-100: #ffe4ee;
+  --color-pink-200: #ffccdd;
+  --color-pink-300: #fba8c4;
+  --color-pink-400: #f47fa6;
+  --color-pink-500: #e85a8a;
+  --color-pink-600: #d13d72;
+  --color-pink-700: #b02a5b;
+  --color-pink-800: #8a1f47;
+  --color-pink-900: #5e1631;
+
+  /* Pastel accents for categories and tags (each has a readable text color) */
+  --color-lavender: #c9b6f2;
+  --color-lavender-fg: #4b3a7a;
+  --color-mint: #a8e6cf;
+  --color-mint-fg: #1f5c45;
+  --color-peach: #ffcba4;
+  --color-peach-fg: #7a3f12;
+  --color-butter: #ffe8a3;
+  --color-butter-fg: #6b5200;
+  --color-sky: #a7d3f5;
+  --color-sky-fg: #1d4a70;
+
+  --animate-pop: pop 260ms ease-out;
+  --animate-sheet-up: sheet-up 220ms ease-out;
+  --animate-fade-in: fade-in 180ms ease-out;
+  --animate-zoom-in: zoom-in 180ms ease-out;
+}
+
+/* ---------- Base ---------- */
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    text-size-adjust: 100%;
+  }
+  body {
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  /* 16px minimum on inputs stops iOS from zooming in on focus. */
+  input,
+  textarea,
+  select {
+    font-size: max(16px, 1rem);
+  }
+  :focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--primary-soft-hover);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes zoom-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
