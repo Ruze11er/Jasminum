@@ -11,6 +11,7 @@ import {
   Field,
   IconButton,
   Input,
+  LinkCard,
   PageHeader,
   ProgressRing,
   SegmentedControl,
@@ -167,6 +168,16 @@ export default function DesignGalleryPage() {
           <Card tone="muted">Muted card</Card>
           <Card tone="pink">Pink card</Card>
         </div>
+
+        <LinkCard>
+          <CardHeader title="Link card" icon={<Heart />} to="/" />
+          <p className="text-sm text-fg-muted">
+            Click anywhere on the card to open Home. Its own buttons keep working:{' '}
+            <Button size="sm" variant="ghost" onClick={() => setProgress(0)}>
+              Reset progress
+            </Button>
+          </p>
+        </LinkCard>
 
         <Section title="Empty state & sheet">
           <EmptyState

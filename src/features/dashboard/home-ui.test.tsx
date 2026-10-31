@@ -96,6 +96,40 @@ describe('home', () => {
   });
 });
 
+describe('home cards', () => {
+  it('opens the matching page from anywhere on a card, through a link for keyboards', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    const link = await screen.findByRole('link', { name: 'Today' });
+    expect(link).toHaveAttribute('href', '/tasks');
+    expect(screen.queryByRole('link', { name: /All tasks|See all/ })).toBeNull();
+    // A click on empty space in the card (here, the progress text).
+    await user.click(await screen.findByText('Nothing planned for today yet.'));
+    expect(await screen.findByRole('heading', { name: 'Tasks', level: 1 })).toBeInTheDocument();
+  });
+
+  it("keeps a card's own buttons working without leaving Home", async () => {
+    const user = userEvent.setup();
+    await eventsRepo.create({
+      title: 'Dentist',
+      start: localDateTimeToIso('2026-11-04', '15:00'),
+      end: localDateTimeToIso('2026-11-04', '15:30'),
+    });
+    renderApp();
+    await user.click(await screen.findByRole('button', { name: 'Edit event: Dentist' }));
+    expect(await screen.findByRole('dialog', { name: 'Edit event' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Calendar', level: 1 })).toBeNull();
+  });
+
+  it('opens a page from a stat tile', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    const stats = await screen.findByRole('region', { name: 'Your week' });
+    await user.click(await within(stats).findByText('No files yet'));
+    expect(await screen.findByRole('heading', { name: 'Library', level: 1 })).toBeInTheDocument();
+  });
+});
+
 describe('quote settings', () => {
   it('chooses kinds of quotes, keeping at least one', async () => {
     const user = userEvent.setup();

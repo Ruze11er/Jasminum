@@ -1,6 +1,5 @@
-import { Link } from 'react-router';
-import { CalendarHeart, ChevronRight, ListChecks } from 'lucide-react';
-import { Card, CardHeader, EmptyState, ProgressRing } from '@/design-system';
+import { CalendarHeart, ListChecks } from 'lucide-react';
+import { Card, CardHeader, EmptyState, LinkCard, ProgressRing } from '@/design-system';
 import { useToday } from '@/lib/useToday';
 import { TaskItem } from '@/features/tasks/components/TaskItem';
 import { useTaskEditor } from '@/features/tasks/editorStore';
@@ -24,20 +23,8 @@ export function TodayCard() {
   const overdue = open.filter((t) => t.dueDate! < today).length;
 
   return (
-    <Card>
-      <CardHeader
-        title="Today"
-        icon={<ListChecks />}
-        action={
-          <Link
-            to="/tasks"
-            className="flex items-center gap-0.5 text-sm font-bold text-link hover:underline"
-          >
-            All tasks
-            <ChevronRight className="size-4" aria-hidden="true" />
-          </Link>
-        }
-      />
+    <LinkCard className="flex flex-col">
+      <CardHeader title="Today" icon={<ListChecks />} to="/tasks" />
       <div className="flex items-center gap-4 rounded-xl bg-surface-muted p-3">
         <ProgressRing
           value={total ? done / total : 0}
@@ -57,7 +44,7 @@ export function TodayCard() {
       </div>
       {shown.length === 0 ? (
         <EmptyState
-          className="py-6"
+          className="flex-1 justify-center py-6"
           icon={<CalendarHeart />}
           title="A fresh, calm day"
           description="Tap + to add a task or event."
@@ -79,15 +66,12 @@ export function TodayCard() {
             ))}
           </ul>
           {open.length > MAX_SHOWN && (
-            <Link
-              to="/tasks"
-              className="mt-2 block text-center text-sm font-bold text-link hover:underline"
-            >
+            <p className="mt-2 text-center text-sm font-semibold text-fg-muted">
               {open.length - MAX_SHOWN} more
-            </Link>
+            </p>
           )}
         </>
       )}
-    </Card>
+    </LinkCard>
   );
 }

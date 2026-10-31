@@ -4,29 +4,33 @@ import { CheckCircle2, Flame, Library, NotebookPen } from 'lucide-react';
 import { db } from '@/data/db';
 import { useSetting } from '@/data/repos/settings';
 import type { LocalDate } from '@/data/types';
+import { CardLink, LinkCard } from '@/design-system';
 import { formatBytes } from '@/lib/format';
 import { compareWeeks, miniStats } from './stats';
 
+/** A number on Home; the whole tile opens the page it's about. */
 function Tile({
   icon,
   label,
   value,
   hint,
+  to,
 }: {
   icon: ReactNode;
   label: string;
   value: ReactNode;
   hint: string;
+  to: string;
 }) {
   return (
-    <div className="rounded-2xl border border-line bg-surface p-4 shadow-soft-sm">
+    <LinkCard className="p-4 md:p-4">
       <dt className="flex items-center gap-1.5 text-sm font-semibold text-fg-muted [&>svg]:size-4">
         {icon}
-        {label}
+        <CardLink to={to}>{label}</CardLink>
       </dt>
       <dd className="mt-1 font-display text-2xl font-bold">{value}</dd>
       <dd className="text-xs text-fg-muted">{hint}</dd>
-    </div>
+    </LinkCard>
   );
 }
 
@@ -52,12 +56,14 @@ export function StatsRow({ today }: { today: LocalDate }) {
         <Tile
           icon={<CheckCircle2 aria-hidden="true" />}
           label="Done this week"
+          to="/tasks"
           value={stats.doneThisWeek}
           hint={compareWeeks(stats.doneThisWeek, stats.doneLastWeek)}
         />
         <Tile
           icon={<Flame aria-hidden="true" />}
           label="Streak"
+          to="/insights"
           value={`${stats.streak} ${stats.streak === 1 ? 'day' : 'days'}`}
           hint={
             stats.streak === 0
@@ -70,12 +76,14 @@ export function StatsRow({ today }: { today: LocalDate }) {
         <Tile
           icon={<NotebookPen aria-hidden="true" />}
           label="Notes this week"
+          to="/notes"
           value={stats.notesThisWeek}
           hint="Written or edited"
         />
         <Tile
           icon={<Library aria-hidden="true" />}
           label="Library"
+          to="/library"
           value={stats.files}
           hint={stats.files ? formatBytes(stats.fileBytes) : 'No files yet'}
         />

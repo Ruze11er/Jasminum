@@ -1,6 +1,6 @@
 export { Button, type ButtonProps } from './components/Button';
 export { IconButton } from './components/IconButton';
-export { Card, CardHeader } from './components/Card';
+export { Card, CardHeader, CardLink, LinkCard } from './components/Card';
 export { Input, Textarea, Field } from './components/Input';
 export { Chip } from './components/Chip';
 export { chipColors, type ChipColor } from './components/chipColors';

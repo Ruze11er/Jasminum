@@ -42,11 +42,12 @@ export default function HomePage() {
 
       <QuoteCard />
 
-      <div className="grid items-start gap-5 md:grid-cols-[1.4fr_1fr]">
+      {/* Both columns stretch to the same height, so neither leaves a gap under its card. */}
+      <div className="grid gap-5 md:grid-cols-[1.4fr_1fr]">
         <TodayCard />
-        <div className="space-y-5">
+        <div className="flex flex-col gap-5">
           <ScheduleCard today={today} />
-          <InsightsCard />
+          <InsightsCard className="flex flex-1 flex-col" />
         </div>
       </div>
 

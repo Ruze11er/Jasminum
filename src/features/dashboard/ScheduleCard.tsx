@@ -1,7 +1,6 @@
-import { Link } from 'react-router';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { CalendarDays, ChevronRight } from 'lucide-react';
-import { Card, CardHeader } from '@/design-system';
+import { CalendarDays } from 'lucide-react';
+import { CardHeader, LinkCard } from '@/design-system';
 import { db } from '@/data/db';
 import { expandEvents } from '@/data/repos/events';
 import type { LocalDate } from '@/data/types';
@@ -25,20 +24,8 @@ export function ScheduleCard({ today }: { today: LocalDate }) {
   }, [today]);
 
   return (
-    <Card>
-      <CardHeader
-        title="Schedule"
-        icon={<CalendarDays />}
-        action={
-          <Link
-            to="/calendar"
-            className="flex items-center gap-0.5 text-sm font-bold text-link hover:underline"
-          >
-            Calendar
-            <ChevronRight className="size-4" aria-hidden="true" />
-          </Link>
-        }
-      />
+    <LinkCard>
+      <CardHeader title="Schedule" icon={<CalendarDays />} to="/calendar" />
       {!data ? (
         <div aria-busy="true" className="h-16" />
       ) : data.occurrences.length === 0 ? (
@@ -73,6 +60,6 @@ export function ScheduleCard({ today }: { today: LocalDate }) {
           })}
         </ul>
       )}
-    </Card>
+    </LinkCard>
   );
 }
