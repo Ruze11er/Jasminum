@@ -1,12 +1,13 @@
 import { Link, NavLink } from 'react-router';
-import { Plus } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { useUiStore } from '@/stores/uiStore';
 import { Wordmark } from '../Logo';
 import { mainNav, settingsNav } from '../navigation';
 
-/** Phone-only top bar: logo on the left, Insights and Settings on the right. */
+/** Phone-only top bar: logo on the left; Search, Insights and Settings on the right. */
 export function MobileHeader() {
+  const openSearch = useUiStore((s) => s.setPaletteOpen);
   const extras = [mainNav.find((n) => n.to === '/insights')!, settingsNav];
   return (
     <header className="sticky top-0 z-30 border-b border-line/60 bg-bg/85 pt-[env(safe-area-inset-top)] backdrop-blur-md md:hidden">
@@ -15,6 +16,15 @@ export function MobileHeader() {
           <Wordmark />
         </Link>
         <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => openSearch(true)}
+            aria-label="Search"
+            title="Search"
+            className="flex size-11 items-center justify-center rounded-full text-fg-muted transition-colors hover:bg-surface-muted"
+          >
+            <Search className="size-5" />
+          </button>
           {extras.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}

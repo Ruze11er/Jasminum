@@ -8,10 +8,13 @@ interface UiState {
   theme: ThemePreference;
   sidebarCollapsed: boolean;
   quickAddOpen: boolean;
+  /** The Ctrl/Cmd+K search palette. */
+  paletteOpen: boolean;
   libraryLayout: LibraryLayout;
   setTheme: (theme: ThemePreference) => void;
   toggleSidebar: () => void;
   setQuickAddOpen: (open: boolean) => void;
+  setPaletteOpen: (open: boolean) => void;
   setLibraryLayout: (layout: LibraryLayout) => void;
 }
 
@@ -25,10 +28,12 @@ export const useUiStore = create<UiState>()(
       theme: 'system',
       sidebarCollapsed: false,
       quickAddOpen: false,
+      paletteOpen: false,
       libraryLayout: 'grid',
       setTheme: (theme) => set({ theme }),
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setQuickAddOpen: (quickAddOpen) => set({ quickAddOpen }),
+      setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
       setLibraryLayout: (libraryLayout) => set({ libraryLayout }),
     }),
     {

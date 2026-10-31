@@ -10,10 +10,14 @@ export function FilePickerButton({
   onFiles,
   children,
   className,
+  accept,
+  multiple = true,
 }: {
   onFiles: (files: File[]) => void;
   children: ReactNode;
   className?: string;
+  accept?: string;
+  multiple?: boolean;
 }) {
   const id = useId();
   return (
@@ -24,7 +28,8 @@ export function FilePickerButton({
       <input
         id={id}
         type="file"
-        multiple
+        multiple={multiple}
+        accept={accept}
         className="sr-only"
         onChange={(e) => {
           const files = Array.from(e.target.files ?? []);

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router';
-import { PanelLeftClose, PanelLeftOpen, Plus } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, Plus, Search } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { useUiStore } from '@/stores/uiStore';
 import { LogoMark } from '../Logo';
@@ -13,6 +13,11 @@ export function Sidebar() {
   const collapsed = useUiStore((s) => s.sidebarCollapsed);
   const toggle = useUiStore((s) => s.toggleSidebar);
   const openQuickAdd = useUiStore((s) => s.setQuickAddOpen);
+  const openSearch = useUiStore((s) => s.setPaletteOpen);
+  const shortcut =
+    typeof navigator !== 'undefined' && /Mac|iP(hone|ad)/.test(navigator.platform)
+      ? '⌘K'
+      : 'Ctrl K';
   // Labels show only on desktop and only when not collapsed.
   const labelClass = collapsed ? 'sr-only' : 'sr-only lg:not-sr-only';
 
@@ -46,6 +51,24 @@ export function Sidebar() {
       >
         <Plus className="size-5" />
         <span className={labelClass}>New</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => openSearch(true)}
+        className={cn(
+          'mb-4 flex h-10 items-center justify-center gap-2 rounded-xl border border-line px-3 text-fg-muted transition-colors hover:bg-surface-muted hover:text-fg',
+          !collapsed && 'lg:justify-start',
+        )}
+        aria-label="Search"
+        aria-keyshortcuts="Control+K Meta+K"
+        title={`Search (${shortcut})`}
+      >
+        <Search className="size-5 shrink-0" />
+        <span className={cn('flex-1 text-left text-sm', labelClass)}>Search</span>
+        <kbd className={cn('rounded-md bg-surface-muted px-1.5 text-xs font-semibold', labelClass)}>
+          {shortcut}
+        </kbd>
       </button>
 
       <div className="flex flex-1 flex-col gap-1">

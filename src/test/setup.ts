@@ -22,6 +22,7 @@ afterEach(() => {
     theme: 'system',
     sidebarCollapsed: false,
     quickAddOpen: false,
+    paletteOpen: false,
     libraryLayout: 'grid',
   });
   useImportQueue.setState({ items: [] });

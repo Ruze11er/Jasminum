@@ -3,6 +3,7 @@ import { Outlet, ScrollRestoration } from 'react-router';
 import { useThemeSync } from '@/design-system/theme';
 import { useTaskEditor } from '@/features/tasks/editorStore';
 import { useEventEditor } from '@/features/calendar/eventEditorStore';
+import { useUiStore } from '@/stores/uiStore';
 import { Sidebar } from './Sidebar';
 import { BottomNav, MobileHeader, QuickAddFab } from './MobileNav';
 import { QuickAddSheet } from './QuickAddSheet';
@@ -13,6 +14,22 @@ import { Toaster } from '@/design-system';
 // The task and event forms are only downloaded the first time they're opened.
 const TaskEditorSheet = lazy(() => import('@/features/tasks/editor/TaskEditorSheet'));
 const EventEditorSheet = lazy(() => import('@/features/calendar/editor/EventEditorSheet'));
+const CommandPalette = lazy(() => import('@/features/search/CommandPalette'));
+
+/** Ctrl+K (Cmd+K on Apple) opens search from anywhere. */
+function useSearchShortcut() {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        const ui = useUiStore.getState();
+        ui.setPaletteOpen(!ui.paletteOpen);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+}
 
 /** Checks event reminders while the app is open. Loaded after start-up, off the main bundle. */
 function useReminders() {
@@ -39,6 +56,10 @@ export function AppShell() {
   if (editorOpen && !editorLoaded) setEditorLoaded(true);
   if (eventEditorOpen && !eventEditorLoaded) setEventEditorLoaded(true);
   useReminders();
+  useSearchShortcut();
+  const paletteOpen = useUiStore((s) => s.paletteOpen);
+  const [paletteLoaded, setPaletteLoaded] = useState(false);
+  if (paletteOpen && !paletteLoaded) setPaletteLoaded(true);
 
   return (
     <div className="min-h-dvh md:flex">
@@ -67,6 +88,11 @@ export function AppShell() {
       {editorLoaded && (
         <Suspense fallback={null}>
           <TaskEditorSheet />
+        </Suspense>
+      )}
+      {paletteLoaded && (
+        <Suspense fallback={null}>
+          <CommandPalette />
         </Suspense>
       )}
       {eventEditorLoaded && (
