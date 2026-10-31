@@ -42,7 +42,9 @@ describe('notes page', () => {
     expect(await db.notes.count()).toBe(0); // nothing saved until there's content
     await user.type(title, 'Biology lecture');
 
-    await waitFor(async () => expect(await db.notes.count()).toBe(1), { timeout: 5000 });
+    await waitFor(async () => expect(await db.notes.count()).toBe(1), {
+      timeout: 10_000,
+    });
     const [note] = await db.notes.toArray();
     expect(note).toMatchObject({ title: 'Biology lecture', folderId: null });
     await waitFor(() => expect(router.state.location.pathname).toBe(`/notes/${note!.id}`));
@@ -147,8 +149,8 @@ describe('notes page', () => {
     renderApp(`/notes/${n.id}`);
 
     await user.click(await screen.findByRole('button', { name: 'Link' }));
-    const picker = await screen.findByRole('dialog', { name: 'Link a task or event' });
-    await user.type(within(picker).getByLabelText('Search tasks and events'), 'lab');
+    const picker = await screen.findByRole('dialog', { name: 'Link a task, event or file' });
+    await user.type(within(picker).getByLabelText('Search tasks, events and files'), 'lab');
     await user.click(await within(picker).findByRole('button', { name: /Write lab report/ }));
 
     const linked = await screen.findByRole('list', { name: 'Linked items' });

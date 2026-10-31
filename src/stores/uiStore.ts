@@ -2,14 +2,17 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export type ThemePreference = 'light' | 'dark' | 'system';
+export type LibraryLayout = 'grid' | 'list';
 
 interface UiState {
   theme: ThemePreference;
   sidebarCollapsed: boolean;
   quickAddOpen: boolean;
+  libraryLayout: LibraryLayout;
   setTheme: (theme: ThemePreference) => void;
   toggleSidebar: () => void;
   setQuickAddOpen: (open: boolean) => void;
+  setLibraryLayout: (layout: LibraryLayout) => void;
 }
 
 /**
@@ -22,13 +25,19 @@ export const useUiStore = create<UiState>()(
       theme: 'system',
       sidebarCollapsed: false,
       quickAddOpen: false,
+      libraryLayout: 'grid',
       setTheme: (theme) => set({ theme }),
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setQuickAddOpen: (quickAddOpen) => set({ quickAddOpen }),
+      setLibraryLayout: (libraryLayout) => set({ libraryLayout }),
     }),
     {
       name: 'jasminum-ui',
-      partialize: (s) => ({ theme: s.theme, sidebarCollapsed: s.sidebarCollapsed }),
+      partialize: (s) => ({
+        theme: s.theme,
+        sidebarCollapsed: s.sidebarCollapsed,
+        libraryLayout: s.libraryLayout,
+      }),
     },
   ),
 );

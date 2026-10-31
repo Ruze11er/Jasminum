@@ -59,3 +59,16 @@ export function isAppleMobile(): boolean {
   const ua = navigator.userAgent;
   return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
 }
+
+/** Space kept free on top of a file's size, so the database itself never runs out. */
+const SAFETY_MARGIN = 20 * 1024 * 1024;
+
+/**
+ * Whether a file of this size should fit. Returns true when the browser can't tell us,
+ * since the write itself still fails safely with a quota error.
+ */
+export async function hasRoomFor(bytes: number): Promise<boolean> {
+  const est = await getStorageEstimate();
+  if (!est) return true;
+  return est.quota - est.usage >= bytes * 1.05 + SAFETY_MARGIN;
+}

@@ -63,3 +63,25 @@ describe('timed values', () => {
     expect(isIsoDateTime('2026-11-02T14:30:00Z')).toBe(true);
   });
 });
+
+describe('file kinds', () => {
+  it('sorts files by extension, then MIME type', async () => {
+    const { kindOf, extensionOf, baseName, previewTypeOf } = await import('./fileKinds');
+    expect(kindOf('Lecture.PDF', '')).toBe('pdf');
+    expect(kindOf('essay.docx', '')).toBe('word');
+    expect(kindOf('deck.pptx', '')).toBe('slides');
+    expect(kindOf('novel.epub', '')).toBe('ebook');
+    expect(kindOf('budget.csv', 'text/csv')).toBe('sheet');
+    expect(kindOf('scan', 'image/jpeg')).toBe('image');
+    expect(kindOf('mystery', 'application/octet-stream')).toBe('other');
+    expect(extensionOf('archive.tar.GZ')).toBe('gz');
+    expect(extensionOf('.hidden')).toBe('');
+    expect(extensionOf('trailing.')).toBe('');
+    expect(baseName('Lecture 3.pdf')).toBe('Lecture 3');
+    expect(baseName('.env')).toBe('.env');
+    expect(previewTypeOf('image', 'heic')).toBe('none');
+    expect(previewTypeOf('image', 'png')).toBe('image');
+    expect(previewTypeOf('sheet', 'csv')).toBe('text');
+    expect(previewTypeOf('word', 'docx')).toBe('none');
+  });
+});

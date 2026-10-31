@@ -1,13 +1,11 @@
-import { useState } from 'react';
 import { Link } from 'react-router';
-import { FolderPlus, NotebookPen, Pencil, Pin, Search, Star, Trash2 } from 'lucide-react';
-import { Button, Chip, EmptyState, IconButton, Input, Select } from '@/design-system';
+import { NotebookPen, Pin, Search, Star } from 'lucide-react';
+import { Button, Chip, EmptyState, Input, Select } from '@/design-system';
 import { noteTitle } from '@/data/repos/notes';
-import type { Folder } from '@/data/types';
 import { clock } from '@/lib/clock';
 import { cn } from '@/lib/cn';
 import { formatRelative } from '@/lib/format';
-import { createFolder, deleteFolder, renameFolder } from '../noteActions';
+import { FolderHeader, NewFolderButton } from '@/features/folders/FolderControls';
 import {
   folderIdOf,
   scopeCounts,
@@ -84,7 +82,7 @@ export function NoteList({
             <span className="text-xs opacity-80">{s.count}</span>
           </button>
         ))}
-        <NewFolderButton onCreated={(f) => onQuery({ scope: `folder:${f.id}` })} />
+        <NewFolderButton scope="notes" onCreated={(f) => onQuery({ scope: `folder:${f.id}` })} />
       </div>
 
       <div className="flex gap-2">
@@ -200,109 +198,6 @@ export function NoteList({
           })}
         </ul>
       )}
-    </div>
-  );
-}
-
-function NewFolderButton({ onCreated }: { onCreated: (f: Folder) => void }) {
-  const [editing, setEditing] = useState(false);
-  const [name, setName] = useState('');
-  const submit = async () => {
-    const folder = await createFolder(name);
-    if (folder) {
-      setEditing(false);
-      setName('');
-      onCreated(folder);
-    }
-  };
-  if (!editing) {
-    return (
-      <button
-        type="button"
-        onClick={() => setEditing(true)}
-        className="flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-dashed border-line-strong px-3 text-sm font-semibold whitespace-nowrap text-fg-muted hover:text-fg max-md:h-10"
-      >
-        <FolderPlus className="size-4" aria-hidden="true" />
-        Folder
-      </button>
-    );
-  }
-  return (
-    <form
-      className="flex shrink-0 items-center gap-1"
-      onSubmit={(e) => {
-        e.preventDefault();
-        void submit();
-      }}
-    >
-      <label htmlFor="new-folder" className="sr-only">
-        New folder name
-      </label>
-      <input
-        id="new-folder"
-        autoFocus
-        value={name}
-        maxLength={40}
-        placeholder="Folder name"
-        onChange={(e) => setName(e.target.value)}
-        onKeyDown={(e) => e.key === 'Escape' && setEditing(false)}
-        className="h-8 w-36 rounded-full border-[1.5px] border-line bg-surface px-3 text-sm outline-none focus:border-brand max-md:h-10"
-      />
-      <Button type="submit" size="sm">
-        Add
-      </Button>
-    </form>
-  );
-}
-
-function FolderHeader({ folder, onDeleted }: { folder: Folder; onDeleted: () => void }) {
-  const [renaming, setRenaming] = useState(false);
-  const [name, setName] = useState(folder.name);
-  if (renaming) {
-    return (
-      <form
-        className="flex items-center gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void renameFolder(folder, name).then((ok) => ok && setRenaming(false));
-        }}
-      >
-        <label htmlFor="rename-folder" className="sr-only">
-          Folder name
-        </label>
-        <Input
-          id="rename-folder"
-          autoFocus
-          value={name}
-          maxLength={40}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => e.key === 'Escape' && setRenaming(false)}
-        />
-        <Button type="submit" size="sm">
-          Save
-        </Button>
-      </form>
-    );
-  }
-  return (
-    <div className="flex items-center gap-1">
-      <h2 className="min-w-0 flex-1 truncate text-lg">{folder.name}</h2>
-      <IconButton
-        label="Rename folder"
-        icon={<Pencil />}
-        onClick={() => {
-          setName(folder.name);
-          setRenaming(true);
-        }}
-      />
-      <IconButton
-        label="Delete folder"
-        icon={<Trash2 />}
-        onClick={() => {
-          onDeleted();
-          void deleteFolder(folder);
-        }}
-      />
     </div>
   );
 }

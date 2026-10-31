@@ -4,6 +4,7 @@ import { afterEach, beforeEach, vi } from 'vitest';
 import { cleanup, configure } from '@testing-library/react';
 import { useUiStore } from '@/stores/uiStore';
 import { useToasts } from '@/design-system/components/toastStore';
+import { useImportQueue } from '@/features/library/importStore';
 import { resetDatabase } from './db';
 
 // Most tests run in jsdom; a few (e.g. file storage) run in plain Node with no window.
@@ -17,7 +18,13 @@ beforeEach(async () => {
 configure({ asyncUtilTimeout: 5000 });
 
 afterEach(() => {
-  useUiStore.setState({ theme: 'system', sidebarCollapsed: false, quickAddOpen: false });
+  useUiStore.setState({
+    theme: 'system',
+    sidebarCollapsed: false,
+    quickAddOpen: false,
+    libraryLayout: 'grid',
+  });
+  useImportQueue.setState({ items: [] });
   useToasts.setState({ toasts: [] });
   if (!isBrowserLike) return;
   cleanup();

@@ -4,6 +4,8 @@ import { Sheet } from '@/design-system';
 import { useUiStore } from '@/stores/uiStore';
 import { useTaskEditor } from '@/features/tasks/editorStore';
 import { useEventEditor } from '@/features/calendar/eventEditorStore';
+import { FilePickerButton } from '@/features/library/components/FilePickerButton';
+import { useImportQueue } from '@/features/library/importStore';
 import { clock } from '@/lib/clock';
 import { localDateOf } from '@/lib/dates';
 
@@ -45,6 +47,7 @@ export function QuickAddSheet() {
   const navigate = useNavigate();
   const openTask = useTaskEditor((s) => s.openNew);
   const openEvent = useEventEditor((s) => s.openNew);
+  const enqueue = useImportQueue((s) => s.enqueue);
 
   return (
     <Sheet
@@ -54,33 +57,58 @@ export function QuickAddSheet() {
       description="What would you like to add?"
     >
       <div className="grid grid-cols-2 gap-3">
-        {actions.map(({ label, hint, icon: Icon, to, tone }) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => {
-              setOpen(false);
-              if (label === 'Task') {
-                // Open the task form right away, dated today.
-                openTask({ dueDate: localDateOf(clock.now()) });
-              } else if (label === 'Event') {
-                // Today, starting at the next full hour.
-                openEvent();
-              } else {
-                navigate(to);
-              }
-            }}
-            className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-4 text-left transition-shadow hover:shadow-soft-md"
-          >
-            <span className={`flex size-10 items-center justify-center rounded-xl ${tone}`}>
-              <Icon className="size-5" />
-            </span>
-            <span>
-              <span className="block font-bold">{label}</span>
-              <span className="block text-sm text-fg-muted">{hint}</span>
-            </span>
-          </button>
-        ))}
+        {actions.map(({ label, hint, icon: Icon, to, tone }) => {
+          const className =
+            'flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-4 text-left transition-shadow hover:shadow-soft-md';
+          const content = (
+            <>
+              <span className={`flex size-10 items-center justify-center rounded-xl ${tone}`}>
+                <Icon className="size-5" />
+              </span>
+              <span>
+                <span className="block font-bold">{label}</span>
+                <span className="block text-sm text-fg-muted">{hint}</span>
+              </span>
+            </>
+          );
+          if (label === 'Import file') {
+            // Opens the file picker straight from this tap (Safari needs a real gesture).
+            return (
+              <FilePickerButton
+                key={label}
+                className={className}
+                onFiles={(files) => {
+                  setOpen(false);
+                  enqueue(files);
+                  navigate(to);
+                }}
+              >
+                {content}
+              </FilePickerButton>
+            );
+          }
+          return (
+            <button
+              key={label}
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                if (label === 'Task') {
+                  // Open the task form right away, dated today.
+                  openTask({ dueDate: localDateOf(clock.now()) });
+                } else if (label === 'Event') {
+                  // Today, starting at the next full hour.
+                  openEvent();
+                } else {
+                  navigate(to);
+                }
+              }}
+              className={className}
+            >
+              {content}
+            </button>
+          );
+        })}
       </div>
     </Sheet>
   );

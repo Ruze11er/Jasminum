@@ -36,7 +36,8 @@ export default defineConfig({
       },
       workbox: {
         // The web manifest is added by the plugin itself; listing it here too breaks the install.
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,json}'],
+        // .mjs: the PDF engine's worker. Without it, PDFs couldn't be previewed offline.
+        globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,woff2,json}'],
         navigateFallback: 'index.html',
         cleanupOutdatedCaches: true,
         // Bundle Workbox into sw.js: one less request, and setup errors fail loudly

@@ -1,6 +1,7 @@
 import type { Table } from 'dexie';
 import { clock, DAY_MS } from '@/lib/clock';
 import { categoriesRepo } from './repos/categories';
+import { documentsRepo } from './repos/documents';
 import { eventsRepo } from './repos/events';
 import { foldersRepo } from './repos/folders';
 import { notesRepo, noteTitle } from './repos/notes';
@@ -50,6 +51,14 @@ export const trashSources: TrashSource[] = [
     title: (e) => noteTitle(e as unknown as Note),
     restore: notesRepo.restore,
     purge: notesRepo.purge,
+  },
+  {
+    type: 'document',
+    label: 'File',
+    table: () => db.documents as unknown as Table<BaseEntity, string>,
+    title: (e) => (e as unknown as { title: string }).title,
+    restore: documentsRepo.restore,
+    purge: documentsRepo.purge,
   },
   {
     type: 'folder',

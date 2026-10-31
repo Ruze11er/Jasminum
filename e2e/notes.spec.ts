@@ -47,7 +47,7 @@ test('link a note to a task and open it from the task', async ({ page }) => {
   await page.getByLabel('Title').fill('Lab notes');
   await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}/);
   await page.getByRole('button', { name: 'Link', exact: true }).click();
-  const picker = page.getByRole('dialog', { name: 'Link a task or event' });
+  const picker = page.getByRole('dialog', { name: 'Link a task, event or file' });
   await picker.getByRole('button', { name: /Write lab report/ }).click();
   await expect(page.getByRole('button', { name: 'Open task: Write lab report' })).toBeVisible();
 
