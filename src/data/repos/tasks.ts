@@ -94,11 +94,19 @@ export const tasksRepo = {
     return base.create({ order: clock.now(), ...input });
   },
 
-  /** Same as the base update, but pushing the due date later counts as postponing. */
-  async update(id: string, patch: Partial<TaskInput>): Promise<Task> {
+  /**
+   * Same as the base update, but pushing the due date later counts as postponing, unless
+   * the app moved it for the user (e.g. spreading out a packed day).
+   */
+  async update(
+    id: string,
+    patch: Partial<TaskInput>,
+    opts: { countAsPostpone?: boolean } = {},
+  ): Promise<Task> {
     const before = await db.tasks.get(id);
     if (!before) throw new EntityNotFoundError('task', id);
     const postponed =
+      opts.countAsPostpone !== false &&
       before.status === 'todo' &&
       !!before.dueDate &&
       !!patch.dueDate &&

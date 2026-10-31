@@ -64,9 +64,13 @@ export function miniStats(input: {
   };
 }
 
-/** "3 more than last week", "Same as last week", "2 fewer than last week". */
-export function compareWeeks(thisWeek: number, lastWeek: number): string {
-  const diff = thisWeek - lastWeek;
-  if (diff === 0) return lastWeek === 0 ? 'A fresh start' : 'Same as last week';
-  return diff > 0 ? `${diff} more than last week` : `${-diff} fewer than last week`;
+/** "3 more than last week", "Same as last month", "2 fewer than last week". */
+export function compareWeeks(
+  thisPeriod: number,
+  lastPeriod: number,
+  period: 'week' | 'month' = 'week',
+): string {
+  const diff = thisPeriod - lastPeriod;
+  if (diff === 0) return lastPeriod === 0 ? 'A fresh start' : `Same as last ${period}`;
+  return diff > 0 ? `${diff} more than last ${period}` : `${-diff} fewer than last ${period}`;
 }

@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
+import { useSearchParams } from 'react-router';
 import {
   CalendarCheck,
   CalendarClock,
@@ -72,7 +73,14 @@ export default function TasksPage() {
   const data = useTasksData();
   const openNew = useTaskEditor((s) => s.openNew);
   const openEdit = useTaskEditor((s) => s.openEdit);
-  const [view, setView] = useState<TaskView>('today');
+  // ?view=overdue (e.g. from an insight) picks the starting view.
+  const [params] = useSearchParams();
+  const [view, setView] = useState<TaskView>(() => {
+    const v = params.get('view');
+    return v === 'today' || v === 'upcoming' || v === 'overdue' || v === 'all' || v === 'completed'
+      ? v
+      : 'today';
+  });
   const [filters, setFilters] = useState<TaskFilters>(noFilters);
   const [showFilters, setShowFilters] = useState(false);
   const today = localDateOf(clock.now());

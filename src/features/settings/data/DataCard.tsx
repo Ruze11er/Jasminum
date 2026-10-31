@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import {
   ChevronRight,
   Database,
@@ -42,7 +42,13 @@ function Row({ title, text, children }: { title: string; text: ReactNode; childr
 /** Settings → Backup & data: back up, restore, undo a restore, exports, integrity, Trash. */
 export function DataCard() {
   const lastBackupAt = useSetting('lastBackupAt');
-  const [open, setOpen] = useState<Open>(null);
+  // ?backup=1 (e.g. from the backup reminder insight) opens the backup dialog straight away.
+  const [params, setParams] = useSearchParams();
+  const [open, setOpen] = useState<Open>(() => (params.get('backup') ? 'backup' : null));
+  const closeBackup = () => {
+    setOpen(null);
+    if (params.has('backup')) setParams({}, { replace: true });
+  };
   const [snapshot, setSnapshot] = useState<{ key: string; at: number } | null>(null);
   const [confirmUndo, setConfirmUndo] = useState(false);
   const [refresh, setRefresh] = useState(0);
@@ -156,7 +162,7 @@ export function DataCard() {
       </div>
 
       <Suspense fallback={null}>
-        {open === 'backup' && <BackupDialog onClose={() => setOpen(null)} />}
+        {open === 'backup' && <BackupDialog onClose={closeBackup} />}
         {open === 'integrity' && <IntegrityDialog onClose={() => setOpen(null)} />}
         {open && typeof open === 'object' && (
           <RestoreDialog

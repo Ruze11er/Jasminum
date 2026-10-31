@@ -44,6 +44,13 @@ export const settingDefinitions = {
     ),
     defaultValue: null as { date: string; quoteId: string } | null,
   },
+  /** Insight rules the user switched off ("Don't show this type"), e.g. ["R6"]. */
+  insightPrefs: {
+    schema: z.object({
+      disabledRules: z.array(z.string().check(z.maxLength(10))).check(z.maxLength(50)),
+    }),
+    defaultValue: { disabledRules: [] as string[] },
+  },
   /** Recently shown quote ids, newest first, so quotes don't repeat too soon. */
   recentQuoteIds: {
     schema: z.array(z.string().check(z.maxLength(60))).check(z.maxLength(200)),

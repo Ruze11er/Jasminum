@@ -1,10 +1,9 @@
-import { Link } from 'react-router';
-import { ChevronRight, Lightbulb } from 'lucide-react';
-import { Card, CardHeader, EmptyState, Sparkle } from '@/design-system';
+import { Sparkle } from '@/design-system';
 import { useSetting } from '@/data/repos/settings';
 import { clock } from '@/lib/clock';
 import { parseLocalDate } from '@/lib/dates';
 import { useToday } from '@/lib/useToday';
+import { InsightsCard } from './InsightsCard';
 import { QuoteCard } from './QuoteCard';
 import { ScheduleCard } from './ScheduleCard';
 import { StatsRow } from './StatsRow';
@@ -44,27 +43,7 @@ export default function HomePage() {
         <TodayCard />
         <div className="space-y-5">
           <ScheduleCard today={today} />
-          <Card>
-            <CardHeader
-              title="Insights"
-              icon={<Lightbulb />}
-              action={
-                <Link
-                  to="/insights"
-                  className="flex items-center gap-0.5 text-sm font-bold text-link hover:underline"
-                >
-                  See all
-                  <ChevronRight className="size-4" aria-hidden="true" />
-                </Link>
-              }
-            />
-            <EmptyState
-              className="py-4"
-              icon={<Lightbulb />}
-              title="Getting to know you"
-              description="Helpful tips appear after a few days of use. Everything stays on your device."
-            />
-          </Card>
+          <InsightsCard />
         </div>
       </div>
 

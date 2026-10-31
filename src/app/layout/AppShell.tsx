@@ -31,17 +31,23 @@ function useSearchShortcut() {
   }, []);
 }
 
-/** Checks event reminders while the app is open. Loaded after start-up, off the main bundle. */
-function useReminders() {
+/**
+ * Background helpers that run while the app is open: event reminders and the insight
+ * rules. Loaded after start-up, off the main bundle.
+ */
+function useBackgroundServices() {
   useEffect(() => {
-    let stop: (() => void) | undefined;
+    const stops: (() => void)[] = [];
     let cancelled = false;
     void import('@/features/calendar/reminders').then((m) => {
-      if (!cancelled) stop = m.startReminders();
+      if (!cancelled) stops.push(m.startReminders());
+    });
+    void import('@/features/insights/runner').then((m) => {
+      if (!cancelled) stops.push(m.startInsightRunner());
     });
     return () => {
       cancelled = true;
-      stop?.();
+      stops.forEach((stop) => stop());
     };
   }, []);
 }
@@ -55,7 +61,7 @@ export function AppShell() {
   // Keep them mounted after first use so their close animation can play.
   if (editorOpen && !editorLoaded) setEditorLoaded(true);
   if (eventEditorOpen && !eventEditorLoaded) setEventEditorLoaded(true);
-  useReminders();
+  useBackgroundServices();
   useSearchShortcut();
   const paletteOpen = useUiStore((s) => s.paletteOpen);
   const [paletteLoaded, setPaletteLoaded] = useState(false);
