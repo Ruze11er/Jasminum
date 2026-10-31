@@ -5,6 +5,7 @@ import { useUiStore, type ThemePreference } from '@/stores/uiStore';
 import { ProfileCard } from './ProfileCard';
 import { StorageCard } from './StorageCard';
 import { OrganizeCard } from './OrganizeCard';
+import { CalendarCard } from './CalendarCard';
 
 export default function SettingsPage() {
   const theme = useUiStore((s) => s.theme);
@@ -37,6 +38,8 @@ export default function SettingsPage() {
             />
           </div>
         </Card>
+
+        <CalendarCard />
 
         <OrganizeCard />
 

@@ -66,3 +66,36 @@ export function timeLabel(hhmm: string): string {
     new Date(2000, 0, 1, h, m),
   );
 }
+
+// ---------- timed values (ISO strings with an offset) ----------
+
+const ISO_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?(Z|[+-]\d{2}:\d{2})$/;
+
+export const isIsoDateTime = (value: string): boolean =>
+  ISO_RE.test(value) && !Number.isNaN(Date.parse(value));
+
+/** Local wall-clock "HH:mm" of a Date. */
+export const toLocalTime = (date: Date): string =>
+  `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+
+/** ISO string with the local offset for an instant: "2026-10-31T09:00:00+01:00". */
+export function toOffsetIso(date: Date): string {
+  const offset = -date.getTimezoneOffset();
+  const sign = offset >= 0 ? '+' : '-';
+  const abs = Math.abs(offset);
+  return `${toLocalDate(date)}T${toLocalTime(date)}:${pad(date.getSeconds())}${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
+}
+
+/** Local date + "HH:mm" → ISO with offset. */
+export function localDateTimeToIso(date: LocalDate, time: string): string {
+  const [h, m] = time.split(':').map(Number);
+  const d = parseLocalDate(date);
+  d.setHours(h!, m!, 0, 0);
+  return toOffsetIso(d);
+}
+
+/** ISO string → this device's local date and "HH:mm". */
+export function splitIso(iso: string): { date: LocalDate; time: string } {
+  const d = new Date(iso);
+  return { date: toLocalDate(d), time: toLocalTime(d) };
+}

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { uuidv7, UUID_RE } from './ids';
 import { formatBytes, formatRelative } from './format';
 import { clock } from './clock';
+import { isIsoDateTime, localDateTimeToIso, splitIso, toOffsetIso } from './dates';
 
 describe('uuidv7', () => {
   it('produces valid, unique v7 ids', () => {
@@ -43,5 +44,22 @@ describe('clock', () => {
     expect(clock.now()).toBe(42);
     clock.reset();
     expect(clock.now()).toBeGreaterThan(42);
+  });
+});
+
+describe('timed values', () => {
+  it('round-trips a local date and time through an ISO string with offset', () => {
+    const iso = localDateTimeToIso('2026-11-02', '14:30');
+    expect(iso).toMatch(/^2026-11-02T14:30:00[+-]\d{2}:\d{2}$/);
+    expect(isIsoDateTime(iso)).toBe(true);
+    expect(splitIso(iso)).toEqual({ date: '2026-11-02', time: '14:30' });
+    expect(Date.parse(toOffsetIso(new Date(Date.parse(iso))))).toBe(Date.parse(iso));
+  });
+
+  it('rejects malformed values', () => {
+    for (const bad of ['2026-11-02', '2026-11-02T14:30', '2026-13-02T14:30:00Z', 'soon']) {
+      expect(isIsoDateTime(bad)).toBe(false);
+    }
+    expect(isIsoDateTime('2026-11-02T14:30:00Z')).toBe(true);
   });
 });

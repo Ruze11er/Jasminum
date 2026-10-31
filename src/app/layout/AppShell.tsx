@@ -1,7 +1,8 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Outlet, ScrollRestoration } from 'react-router';
 import { useThemeSync } from '@/design-system/theme';
 import { useTaskEditor } from '@/features/tasks/editorStore';
+import { useEventEditor } from '@/features/calendar/eventEditorStore';
 import { Sidebar } from './Sidebar';
 import { BottomNav, MobileHeader, QuickAddFab } from './MobileNav';
 import { QuickAddSheet } from './QuickAddSheet';
@@ -9,15 +10,35 @@ import { UpdatePrompt } from './UpdatePrompt';
 import { DataStatusScreen } from './DataStatusScreen';
 import { Toaster } from '@/design-system';
 
-// The task form is only downloaded the first time it's opened.
+// The task and event forms are only downloaded the first time they're opened.
 const TaskEditorSheet = lazy(() => import('@/features/tasks/editor/TaskEditorSheet'));
+const EventEditorSheet = lazy(() => import('@/features/calendar/editor/EventEditorSheet'));
+
+/** Checks event reminders while the app is open. Loaded after start-up, off the main bundle. */
+function useReminders() {
+  useEffect(() => {
+    let stop: (() => void) | undefined;
+    let cancelled = false;
+    void import('@/features/calendar/reminders').then((m) => {
+      if (!cancelled) stop = m.startReminders();
+    });
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
+  }, []);
+}
 
 export function AppShell() {
   useThemeSync();
   const editorOpen = useTaskEditor((s) => s.open);
   const [editorLoaded, setEditorLoaded] = useState(false);
-  // Keep it mounted after first use so its close animation can play.
+  const eventEditorOpen = useEventEditor((s) => s.open);
+  const [eventEditorLoaded, setEventEditorLoaded] = useState(false);
+  // Keep them mounted after first use so their close animation can play.
   if (editorOpen && !editorLoaded) setEditorLoaded(true);
+  if (eventEditorOpen && !eventEditorLoaded) setEventEditorLoaded(true);
+  useReminders();
 
   return (
     <div className="min-h-dvh md:flex">
@@ -46,6 +67,11 @@ export function AppShell() {
       {editorLoaded && (
         <Suspense fallback={null}>
           <TaskEditorSheet />
+        </Suspense>
+      )}
+      {eventEditorLoaded && (
+        <Suspense fallback={null}>
+          <EventEditorSheet />
         </Suspense>
       )}
       <Toaster>

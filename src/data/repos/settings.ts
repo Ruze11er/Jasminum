@@ -3,6 +3,8 @@ import { clock } from '@/lib/clock';
 import { z, type Schema } from '@/lib/validation';
 import { db } from '../db';
 
+export type WeekStart = 0 | 1 | 6;
+
 /**
  * Every stored setting, with its validation and default. Add new settings here.
  * Theme is NOT here: it lives in localStorage so it can be applied before first paint.
@@ -20,6 +22,11 @@ export const settingDefinitions = {
   lastBackupAt: {
     schema: z.nullable(z.int()),
     defaultValue: null as number | null,
+  },
+  /** First day of the week on the calendar: 1 = Monday, 0 = Sunday, 6 = Saturday. */
+  weekStartsOn: {
+    schema: z.union([z.literal(0), z.literal(1), z.literal(6)]),
+    defaultValue: 1 as WeekStart,
   },
 } satisfies Record<string, { schema: Schema; defaultValue: unknown }>;
 

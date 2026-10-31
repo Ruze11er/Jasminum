@@ -1,6 +1,7 @@
 import type { Table } from 'dexie';
 import { clock, DAY_MS } from '@/lib/clock';
 import { categoriesRepo } from './repos/categories';
+import { eventsRepo } from './repos/events';
 import { tagsRepo } from './repos/tags';
 import { tasksRepo } from './repos/tasks';
 import type { BaseEntity, EntityType } from './types';
@@ -31,6 +32,14 @@ export const trashSources: TrashSource[] = [
     title: (e) => (e as unknown as { title: string }).title,
     restore: tasksRepo.restore,
     purge: tasksRepo.purge,
+  },
+  {
+    type: 'event',
+    label: 'Event',
+    table: () => db.events as unknown as Table<BaseEntity, string>,
+    title: (e) => (e as unknown as { title: string }).title,
+    restore: eventsRepo.restore,
+    purge: eventsRepo.purge,
   },
   {
     type: 'tag',

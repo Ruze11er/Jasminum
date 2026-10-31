@@ -3,6 +3,7 @@ import { CalendarPlus, FileUp, ListPlus, SquarePen, type LucideIcon } from 'luci
 import { Sheet } from '@/design-system';
 import { useUiStore } from '@/stores/uiStore';
 import { useTaskEditor } from '@/features/tasks/editorStore';
+import { useEventEditor } from '@/features/calendar/eventEditorStore';
 import { clock } from '@/lib/clock';
 import { localDateOf } from '@/lib/dates';
 
@@ -43,6 +44,7 @@ export function QuickAddSheet() {
   const setOpen = useUiStore((s) => s.setQuickAddOpen);
   const navigate = useNavigate();
   const openTask = useTaskEditor((s) => s.openNew);
+  const openEvent = useEventEditor((s) => s.openNew);
 
   return (
     <Sheet
@@ -61,6 +63,9 @@ export function QuickAddSheet() {
               if (label === 'Task') {
                 // Open the task form right away, dated today.
                 openTask({ dueDate: localDateOf(clock.now()) });
+              } else if (label === 'Event') {
+                // Today, starting at the next full hour.
+                openEvent();
               } else {
                 navigate(to);
               }

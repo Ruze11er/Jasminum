@@ -50,15 +50,23 @@ export interface ChecklistItem extends BaseEntity {
 export interface CalendarEvent extends BaseEntity {
   title: string;
   description: string;
-  start: string; // ISO with offset, or LocalDate when allDay
+  /** ISO with offset ("2026-10-31T09:00:00+01:00"), or a LocalDate when allDay. */
+  start: string;
+  /** Same format as start. For all-day events this is the last day (inclusive). */
   end: string;
   allDay: Flag;
   location: string;
   categoryId: string | null;
   tagIds: string[];
   rrule: string | null;
-  exdates: string[];
-  reminderAt: number | null;
+  /** Occurrence dates (LocalDate) removed from a repeating event ("delete this event only"). */
+  exdates: LocalDate[];
+  /**
+   * Remind this many minutes before each occurrence starts, or null for no reminder.
+   * All-day events count from 09:00 on their day. Minutes, not a timestamp, so it works
+   * for every occurrence of a repeating event.
+   */
+  reminderMinutes: number | null;
 }
 
 export interface Note extends BaseEntity {
