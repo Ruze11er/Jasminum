@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '@/app/router';
@@ -9,6 +9,7 @@ import { foldersRepo } from '@/data/repos/folders';
 import { tagsRepo } from '@/data/repos/tags';
 import type { FileStore } from '@/data/files/FileStore';
 import { clock } from '@/lib/clock';
+import { DOC_DRAG_TYPE } from './moveDocument';
 
 /*
  * jsdom Blobs can't go into the in-memory IndexedDB and have no stream(), so these UI
@@ -210,5 +211,94 @@ describe('library', () => {
     await user.upload(within(menu).getByLabelText(/Import file/), fileOf('scan.txt', 'scan'));
     await waitFor(() => expect(router.state.location.pathname).toBe('/library'));
     expect(await screen.findByRole('link', { name: /scan/ })).toBeInTheDocument();
+  });
+});
+
+describe('library folders', () => {
+  it('shows folders as tiles, opens one, and goes back through the breadcrumb', async () => {
+    const user = userEvent.setup();
+    const papers = await foldersRepo.add('documents', 'Papers');
+    await foldersRepo.add('documents', 'Photos');
+    await addDoc({ title: 'Thesis', folderId: papers.id });
+    await addDoc({ title: 'Loose note' });
+    renderApp();
+
+    const tiles = await screen.findByRole('list', { name: 'Folders' });
+    expect(within(tiles).getByRole('button', { name: /Papers.*1 file/ })).toBeInTheDocument();
+    expect(within(tiles).getByRole('button', { name: /Photos.*Empty/ })).toBeInTheDocument();
+    // Files outside a folder view say which folder they're in.
+    expect(
+      within(await fileList()).getByRole('link', { name: /Thesis.*in folder\s*Papers/ }),
+    ).toBeInTheDocument();
+
+    await user.click(within(tiles).getByRole('button', { name: /Papers/ }));
+    expect(await screen.findByRole('heading', { name: 'Papers' })).toBeInTheDocument();
+    expect(within(await fileList()).getAllByRole('link')).toHaveLength(1);
+
+    const crumbs = screen.getByRole('navigation', { name: 'Breadcrumb' });
+    await user.click(within(crumbs).getByRole('button', { name: 'Library' }));
+    expect(await screen.findByRole('list', { name: 'Folders' })).toBeInTheDocument();
+  });
+
+  it('creates a folder from the "New folder" tile and opens it, empty', async () => {
+    const user = userEvent.setup();
+    await addDoc({ title: 'Something' });
+    renderApp();
+    await user.click(await screen.findByRole('button', { name: 'New folder' }));
+    await user.type(screen.getByLabelText('New folder name'), 'Biology');
+    await user.click(screen.getByRole('button', { name: 'Create' }));
+    expect(await screen.findByRole('heading', { name: 'Biology' })).toBeInTheDocument();
+    expect(screen.getByText('This folder is empty')).toBeInTheDocument();
+    expect(screen.getAllByLabelText('Add files here')).not.toHaveLength(0);
+  });
+
+  it('changes a folder color', async () => {
+    const user = userEvent.setup();
+    const folder = await foldersRepo.add('documents', 'Trips');
+    renderApp(`/library?in=folder:${folder.id}`);
+    await user.click(await screen.findByRole('button', { name: 'Folder color' }));
+    const colors = screen.getByRole('group', { name: 'Folder color' });
+    await user.click(within(colors).getByRole('button', { name: 'Green' }));
+    await waitFor(async () => expect((await db.folders.get(folder.id))?.color).toBe('mint'));
+    // The screen updates from the database a moment after the write.
+    await waitFor(() =>
+      expect(within(colors).getByRole('button', { name: 'Green' })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      ),
+    );
+  });
+
+  it('finds folders by name while searching', async () => {
+    const user = userEvent.setup();
+    await foldersRepo.add('documents', 'Chemistry');
+    await foldersRepo.add('documents', 'Recipes');
+    await addDoc({ title: 'Lab report' });
+    renderApp();
+    await user.type(await screen.findByLabelText('Search files'), 'chem');
+    const tiles = await screen.findByRole('list', { name: 'Folders' });
+    await waitFor(() => expect(within(tiles).getAllByRole('button')).toHaveLength(1));
+    expect(within(tiles).getByRole('button', { name: /Chemistry/ })).toBeInTheDocument();
+  });
+
+  it('moves a file by dropping its card on a folder, with Undo', async () => {
+    const user = userEvent.setup();
+    const folder = await foldersRepo.add('documents', 'School');
+    const doc = await addDoc({ title: 'Homework' });
+    renderApp();
+    const tile = within(await screen.findByRole('list', { name: 'Folders' })).getByRole('button', {
+      name: /School/,
+    });
+    const dataTransfer = {
+      types: [DOC_DRAG_TYPE],
+      getData: (type: string) => (type === DOC_DRAG_TYPE ? doc.id : ''),
+      dropEffect: 'none',
+    };
+    fireEvent.dragOver(tile, { dataTransfer });
+    fireEvent.drop(tile, { dataTransfer });
+    await waitFor(async () => expect((await db.documents.get(doc.id))?.folderId).toBe(folder.id));
+    expect(await screen.findByText('Moved "Homework" to School')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Undo' }));
+    await waitFor(async () => expect((await db.documents.get(doc.id))?.folderId).toBeNull());
   });
 });

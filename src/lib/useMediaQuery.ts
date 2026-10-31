@@ -15,3 +15,6 @@ export function useMediaQuery(query: string): boolean {
 
 /** Tailwind's `md` breakpoint: tablets and desktops. */
 export const useIsDesktop = () => useMediaQuery('(min-width: 768px)');
+
+/** Tailwind's `xl` breakpoint: wide enough for a second sidebar next to the app's own. */
+export const useIsWide = () => useMediaQuery('(min-width: 1280px)');

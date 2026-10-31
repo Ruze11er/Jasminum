@@ -1,10 +1,13 @@
 import { Link } from 'react-router';
-import { CircleAlert, Star } from 'lucide-react';
+import { CircleAlert, Folder as FolderIcon, Star } from 'lucide-react';
+import { chipColorClasses } from '@/design-system/components/chipColors';
 import type { LibraryDocument } from '@/data/types';
+import { folderColor } from '@/features/folders/folderColor';
 import type { LibraryLayout } from '@/stores/uiStore';
 import { cn } from '@/lib/cn';
 import { formatBytes, formatRelative } from '@/lib/format';
 import { KIND_LABELS } from '@/lib/fileKinds';
+import { DOC_DRAG_TYPE } from '../moveDocument';
 import type { LibraryData } from '../useLibraryData';
 import { KindIcon } from './KindIcon';
 
@@ -15,6 +18,7 @@ export function DocumentList({
   layout,
   search,
   now,
+  showFolder,
 }: {
   docs: LibraryDocument[];
   data: LibraryData;
@@ -22,6 +26,8 @@ export function DocumentList({
   /** The current `?…` string, kept so Back returns to the same filters. */
   search: string;
   now: number;
+  /** Label each file with its folder (off inside a folder, where it's obvious). */
+  showFolder: boolean;
 }) {
   const meta = (d: LibraryDocument) =>
     `${d.ext ? d.ext.toUpperCase() : KIND_LABELS[d.kind].one} · ${formatBytes(d.size)} · ${formatRelative(d.addedAt, now)}`;
@@ -37,6 +43,31 @@ export function DocumentList({
     </>
   );
 
+  const folderTag = (d: LibraryDocument) => {
+    const folder = showFolder && d.folderId ? data.folderById.get(d.folderId) : undefined;
+    if (!folder) return null;
+    return (
+      <span
+        className={cn(
+          'inline-flex max-w-full min-w-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold',
+          chipColorClasses[folderColor(folder)],
+        )}
+      >
+        <FolderIcon aria-hidden="true" className="size-3 shrink-0" />
+        <span className="sr-only">, in folder </span>
+        <span className="truncate">{folder.name}</span>
+      </span>
+    );
+  };
+
+  // Desktop: drag a file onto a folder to move it. The file page has the same as a menu.
+  const dragProps = (d: LibraryDocument) => ({
+    onDragStart: (e: React.DragEvent) => {
+      e.dataTransfer.setData(DOC_DRAG_TYPE, d.id);
+      e.dataTransfer.effectAllowed = 'move';
+    },
+  });
+
   if (layout === 'list') {
     return (
       <ul
@@ -47,6 +78,7 @@ export function DocumentList({
           <li key={d.id}>
             <Link
               to={`/library/${d.id}${search}`}
+              {...dragProps(d)}
               className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-surface-muted"
             >
               <KindIcon kind={d.kind} className="size-9" />
@@ -57,11 +89,9 @@ export function DocumentList({
                 </span>
                 <span className="block truncate text-xs font-semibold text-fg-muted">
                   {meta(d)}
-                  {d.folderId && data.folderById.get(d.folderId)
-                    ? ` · ${data.folderById.get(d.folderId)!.name}`
-                    : ''}
                 </span>
               </span>
+              <span className="hidden max-w-[40%] shrink-0 sm:flex">{folderTag(d)}</span>
             </Link>
           </li>
         ))}
@@ -75,20 +105,23 @@ export function DocumentList({
         <li key={d.id} className="min-w-0">
           <Link
             to={`/library/${d.id}${search}`}
+            {...dragProps(d)}
             className={cn(
-              'flex h-full flex-col gap-3 rounded-2xl border border-line bg-surface p-3 shadow-soft-sm transition-shadow hover:shadow-soft-md',
+              'flex h-full flex-col gap-3 rounded-2xl border border-line bg-surface p-3.5 shadow-soft-sm transition-[border-color,box-shadow,transform] duration-200',
+              'hover:-translate-y-0.5 hover:border-primary/70 hover:shadow-soft-lg hover:ring-1 hover:ring-primary/70',
             )}
           >
             <span className="flex items-start justify-between gap-2">
               <KindIcon kind={d.kind} />
               <span className="flex gap-1 pt-1">{badges(d)}</span>
             </span>
-            <span className="min-w-0">
+            <span className="flex min-w-0 flex-1 flex-col">
               <span className="line-clamp-2 font-semibold break-words">{d.title}</span>
               <span className="mt-1 block truncate text-xs font-semibold text-fg-muted">
                 {meta(d)}
               </span>
             </span>
+            {folderTag(d) && <span className="flex min-w-0">{folderTag(d)}</span>}
           </Link>
         </li>
       ))}

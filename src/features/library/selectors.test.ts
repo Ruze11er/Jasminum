@@ -8,6 +8,7 @@ import {
   parseKind,
   parseView,
   selectDocuments,
+  selectFolders,
   type LibraryQuery,
 } from './selectors';
 
@@ -126,8 +127,17 @@ describe('library views', () => {
       unfiled: 3,
     });
     expect(c.byFolder.get('f-school')).toBe(1);
+    expect(c.sizeByFolder.get('f-school')).toBe(docs.find((d) => d.folderId === 'f-school')!.size);
     expect(c.byKind.get('pdf')).toBe(2);
     expect(c.totalSize).toBe(5000 + 300 + 1000 + 1000);
+  });
+
+  it('finds folders by name, ignoring case and accents', () => {
+    const folders = [{ name: 'Biología' }, { name: 'Math homework' }, { name: 'Trips' }];
+    expect(selectFolders(folders, '')).toHaveLength(3);
+    expect(selectFolders(folders, 'BIOLOGIA')).toEqual([{ name: 'Biología' }]);
+    expect(selectFolders(folders, 'home math')).toEqual([{ name: 'Math homework' }]);
+    expect(selectFolders(folders, 'nothing')).toEqual([]);
   });
 
   it('reads URL values safely', () => {

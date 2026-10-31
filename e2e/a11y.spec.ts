@@ -85,6 +85,17 @@ async function seed(page: Page) {
           ...base,
         },
       ],
+      // One document folder per color, so every folder tile color is checked.
+      folders: ['School', 'Travel', 'Money', 'Recipes', 'Health', 'Music'].map((name, i) => ({
+        id: `fd${i}`,
+        name,
+        parentId: null,
+        scope: 'documents',
+        order: i,
+        color: null,
+        icon: null,
+        ...base,
+      })),
       notes: [
         {
           id: 'n1',
@@ -176,6 +187,7 @@ for (const scheme of ['light', 'dark'] as const) {
         ['notes', '/notes'],
         ['note', '/notes/n1'],
         ['library', '/library'],
+        ['library folder', '/library?in=folder:fd0'],
         ['insights', '/insights'],
         ['settings', '/settings'],
         ['trash', '/trash'],

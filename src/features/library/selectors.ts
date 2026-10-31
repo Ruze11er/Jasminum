@@ -42,7 +42,7 @@ export const isLibrarySort = (v: string | null): v is LibrarySort =>
 export const folderIdOfView = (view: LibraryView) =>
   view.startsWith('folder:') ? view.slice(7) : null;
 
-const fold = (s: string) =>
+export const fold = (s: string) =>
   s
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
@@ -100,6 +100,15 @@ export function selectDocuments(
     .sort((a, b) => comparators[sort](a, b) || byName(a, b) || a.id.localeCompare(b.id));
 }
 
+export const filesLabel = (n: number) => `${n} ${n === 1 ? 'file' : 'files'}`;
+
+/** Folders whose name contains every word of the search. */
+export function selectFolders<F extends { name: string }>(folders: F[], text: string): F[] {
+  const words = fold(text).split(/\s+/).filter(Boolean);
+  if (!words.length) return folders;
+  return folders.filter((f) => words.every((w) => fold(f.name).includes(w)));
+}
+
 /** Counts for the view chips and the type filter. */
 export function libraryCounts(
   docs: LibraryDocument[],
@@ -108,10 +117,13 @@ export function libraryCounts(
   const live = docs.filter((d) => !d.deletedAt);
   const recentSince = ctx.now - RECENT_DAYS * DAY_MS;
   const byFolder = new Map<string, number>();
+  const sizeByFolder = new Map<string, number>();
   const byKind = new Map<DocumentKind, number>();
   for (const d of live) {
-    if (d.folderId && ctx.activeFolderIds.has(d.folderId))
+    if (d.folderId && ctx.activeFolderIds.has(d.folderId)) {
       byFolder.set(d.folderId, (byFolder.get(d.folderId) ?? 0) + 1);
+      sizeByFolder.set(d.folderId, (sizeByFolder.get(d.folderId) ?? 0) + d.size);
+    }
     byKind.set(d.kind, (byKind.get(d.kind) ?? 0) + 1);
   }
   return {
@@ -123,6 +135,7 @@ export function libraryCounts(
     unfiled: live.filter((d) => !d.folderId || !ctx.activeFolderIds.has(d.folderId)).length,
     totalSize: live.reduce((sum, d) => sum + d.size, 0),
     byFolder,
+    sizeByFolder,
     byKind,
   };
 }

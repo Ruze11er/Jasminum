@@ -23,6 +23,15 @@ export async function createFolder(scope: FolderScope, name: string): Promise<Fo
   }
 }
 
+/** Sets the folder's color; null goes back to the automatic one. */
+export async function setFolderColor(folder: Folder, color: string | null) {
+  try {
+    await foldersRepo.update(folder.id, { color });
+  } catch (err) {
+    toast({ tone: 'error', message: firstIssue(err) ?? "Couldn't change the color" });
+  }
+}
+
 export async function renameFolder(folder: Folder, name: string): Promise<boolean> {
   try {
     await foldersRepo.update(folder.id, { name });
