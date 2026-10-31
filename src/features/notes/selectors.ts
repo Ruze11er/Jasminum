@@ -106,3 +106,5 @@ export function snippet(note: Pick<Note, 'title' | 'contentText'>, length = 120)
   const text = lines.join(' · ');
   return text.length > length ? `${text.slice(0, length - 1)}…` : text;
 }
+
+export const notesLabel = (n: number) => `${n} ${n === 1 ? 'note' : 'notes'}`;

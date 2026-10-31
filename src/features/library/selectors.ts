@@ -42,7 +42,7 @@ export const isLibrarySort = (v: string | null): v is LibrarySort =>
 export const folderIdOfView = (view: LibraryView) =>
   view.startsWith('folder:') ? view.slice(7) : null;
 
-export const fold = (s: string) =>
+const fold = (s: string) =>
   s
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
@@ -102,12 +102,7 @@ export function selectDocuments(
 
 export const filesLabel = (n: number) => `${n} ${n === 1 ? 'file' : 'files'}`;
 
-/** Folders whose name contains every word of the search. */
-export function selectFolders<F extends { name: string }>(folders: F[], text: string): F[] {
-  const words = fold(text).split(/\s+/).filter(Boolean);
-  if (!words.length) return folders;
-  return folders.filter((f) => words.every((w) => fold(f.name).includes(w)));
-}
+export { selectFolders } from '@/features/folders/selectFolders';
 
 /** Counts for the view chips and the type filter. */
 export function libraryCounts(

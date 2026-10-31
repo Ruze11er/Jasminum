@@ -9,6 +9,7 @@ import {
   chipColors,
   EmptyState,
   Field,
+  FilterChips,
   IconButton,
   Input,
   LinkCard,
@@ -59,6 +60,7 @@ export default function DesignGalleryPage() {
   const [view, setView] = useState<'day' | 'week' | 'month'>('week');
   const [sheetOpen, setSheetOpen] = useState(false);
   const [progress, setProgress] = useState(0.6);
+  const [chip, setChip] = useState<'all' | 'recent' | 'favorites'>('all');
 
   return (
     <>
@@ -168,6 +170,19 @@ export default function DesignGalleryPage() {
           <Card tone="muted">Muted card</Card>
           <Card tone="pink">Pink card</Card>
         </div>
+
+        <Section title="Filter chips">
+          <FilterChips
+            label="Example filter"
+            value={chip}
+            onChange={setChip}
+            items={[
+              { value: 'all', label: 'All', count: 12, icon: <BookOpen /> },
+              { value: 'recent', label: 'Recent', count: 4, icon: <Search /> },
+              { value: 'favorites', label: 'Favorites', count: 2, icon: <Star /> },
+            ]}
+          />
+        </Section>
 
         <LinkCard>
           <CardHeader title="Link card" icon={<Heart />} to="/" />

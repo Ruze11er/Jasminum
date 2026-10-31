@@ -1,8 +1,7 @@
 import { lazy, Suspense, useState } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
-import { NotebookPen, Plus } from 'lucide-react';
-import { Button, EmptyState, PageHeader } from '@/design-system';
-import { useIsDesktop } from '@/lib/useMediaQuery';
+import { Plus } from 'lucide-react';
+import { Button, PageHeader } from '@/design-system';
 import { NoteList } from './components/NoteList';
 import {
   defaultNoteQuery,
@@ -26,15 +25,15 @@ const EditorSkeleton = () => (
 );
 
 /**
- * Notes: a list (with search and filters) and the editor. Two panes on larger screens;
- * on phones the list and the editor are separate screens. Filters live in the URL.
+ * Notes: the list of notes (with search, views and folders), or one note in the editor.
+ * The editor takes the whole content area; Back or Save returns to the list. Filters live
+ * in the URL, so the list comes back as it was.
  */
 export default function NotesPage() {
   const { noteId = null } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const desktop = useIsDesktop();
   const data = useNotesData();
 
   const sort = params.get('sort');
@@ -79,20 +78,12 @@ export default function NotesPage() {
           navigate(`/notes/${id}${search}`, { replace: true });
         }}
         onClose={closeNote}
-        showBack={!desktop}
       />
     </Suspense>
   );
 
   const list = data ? (
-    <NoteList
-      data={data}
-      query={query}
-      onQuery={setQuery}
-      selectedId={noteId}
-      search={search}
-      onNew={newNote}
-    />
+    <NoteList data={data} query={query} onQuery={setQuery} search={search} onNew={newNote} />
   ) : (
     <div
       aria-busy="true"
@@ -101,12 +92,12 @@ export default function NotesPage() {
     />
   );
 
-  // Phone, note open: the editor is the whole screen.
+  // A note is open: the editor is the whole page.
   // (The title is an input, so a hidden heading names the page for screen readers.)
-  if (!desktop && noteId) {
+  if (noteId) {
     return (
       <>
-        <h1 className="sr-only">Note</h1>
+        <h1 className="sr-only">{noteId === NEW_NOTE ? 'New note' : 'Note'}</h1>
         {editor}
       </>
     );
@@ -122,25 +113,7 @@ export default function NotesPage() {
           </Button>
         }
       />
-      {desktop ? (
-        <div className="grid grid-cols-[minmax(15rem,19rem)_minmax(0,1fr)] items-start gap-6">
-          <div>{list}</div>
-          <div>
-            {editor || (
-              <div className="rounded-2xl border border-dashed border-line">
-                <EmptyState
-                  icon={<NotebookPen />}
-                  title="Pick a note"
-                  description="Choose a note from the list, or start a new one."
-                  action={<Button onClick={newNote}>New note</Button>}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      ) : (
-        list
-      )}
+      {list}
     </>
   );
 }

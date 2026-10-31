@@ -1,8 +1,8 @@
 import { Link } from 'react-router';
-import { CircleAlert, Folder as FolderIcon, Star } from 'lucide-react';
-import { chipColorClasses } from '@/design-system/components/chipColors';
+import { CircleAlert, Star } from 'lucide-react';
 import type { LibraryDocument } from '@/data/types';
-import { folderColor } from '@/features/folders/folderColor';
+import { FolderTag } from '@/features/folders/FolderBanner';
+import { dragSource } from '@/features/folders/useItemDrop';
 import type { LibraryLayout } from '@/stores/uiStore';
 import { cn } from '@/lib/cn';
 import { formatBytes, formatRelative } from '@/lib/format';
@@ -45,28 +45,10 @@ export function DocumentList({
 
   const folderTag = (d: LibraryDocument) => {
     const folder = showFolder && d.folderId ? data.folderById.get(d.folderId) : undefined;
-    if (!folder) return null;
-    return (
-      <span
-        className={cn(
-          'inline-flex max-w-full min-w-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold',
-          chipColorClasses[folderColor(folder)],
-        )}
-      >
-        <FolderIcon aria-hidden="true" className="size-3 shrink-0" />
-        <span className="sr-only">, in folder </span>
-        <span className="truncate">{folder.name}</span>
-      </span>
-    );
+    return folder ? <FolderTag folder={folder} /> : null;
   };
-
   // Desktop: drag a file onto a folder to move it. The file page has the same as a menu.
-  const dragProps = (d: LibraryDocument) => ({
-    onDragStart: (e: React.DragEvent) => {
-      e.dataTransfer.setData(DOC_DRAG_TYPE, d.id);
-      e.dataTransfer.effectAllowed = 'move';
-    },
-  });
+  const dragProps = (d: LibraryDocument) => dragSource(DOC_DRAG_TYPE, d.id);
 
   if (layout === 'list') {
     return (

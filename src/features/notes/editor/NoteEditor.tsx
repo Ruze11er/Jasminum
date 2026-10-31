@@ -5,8 +5,8 @@ import { EditorContent, useEditor, type JSONContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { TaskItem, TaskList } from '@tiptap/extension-list';
 import { Placeholder } from '@tiptap/extensions';
-import { ArrowLeft, Pin, Star, Trash2 } from 'lucide-react';
-import { IconButton, Select, toast } from '@/design-system';
+import { ArrowLeft, Check, Pin, Star, Trash2 } from 'lucide-react';
+import { Button, IconButton, Select, toast } from '@/design-system';
 import { db } from '@/data/db';
 import { foldersRepo } from '@/data/repos/folders';
 import { notesRepo, type NoteInput } from '@/data/repos/notes';
@@ -32,9 +32,8 @@ export interface NoteEditorProps {
   defaultFolderId: string | null;
   /** Called once a new note is first saved, with its id. */
   onCreated: (id: string) => void;
-  /** Leave the editor (Back on phones, and after deleting). */
+  /** Back to the notes list (Back, Save, and after deleting). */
   onClose: () => void;
-  showBack: boolean;
 }
 
 /** The note editor. Lazy-loaded: Tiptap is the biggest library in the app. */
@@ -85,7 +84,6 @@ function NoteForm({
   defaultFolderId,
   onCreated,
   onClose,
-  showBack,
   recovered,
 }: NoteEditorProps & {
   initial: Note | null;
@@ -238,19 +236,41 @@ function NoteForm({
     .filter((n): n is string => !!n);
   const now = clock.now();
 
+  // Changes save automatically; Save just finishes any pending save, confirms it, and goes
+  // back to the list. Back does the same without the message, so no work is ever lost.
+  const saveAndClose = async () => {
+    await flush();
+    if (noteId.current) toast({ message: 'Note saved' });
+    onClose();
+  };
+  const saveAndCloseRef = useRef(saveAndClose);
+  useEffect(() => {
+    saveAndCloseRef.current = saveAndClose;
+  });
+  // Ctrl+S / Cmd+S saves too, instead of the browser's "Save page" dialog.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        void saveAndCloseRef.current();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   return (
     <article aria-label="Note" className="space-y-4">
-      <div className="flex items-center gap-1">
-        {showBack && <IconButton label="Back to notes" icon={<ArrowLeft />} onClick={onClose} />}
-        <p className="flex-1 truncate px-1 text-sm text-fg-muted">
-          {status === 'saving' || status === 'dirty'
-            ? 'Saving…'
-            : status === 'error'
-              ? 'Not saved'
-              : live
-                ? `Edited ${formatRelative(live.updatedAt, now)}`
-                : 'New note'}
-        </p>
+      <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 -mt-5 flex items-center gap-1 border-b border-line/60 bg-bg/90 px-4 py-2 backdrop-blur-md md:top-0 md:-mx-8 md:-mt-10 md:px-8 md:py-3">
+        <Button
+          variant="ghost"
+          icon={<ArrowLeft />}
+          onClick={onClose}
+          aria-label="Back to notes"
+          className="mr-auto -ml-2 px-2.5"
+        >
+          Back
+        </Button>
         <IconButton
           label={pinned ? 'Unpin' : 'Pin to top'}
           aria-pressed={pinned}
@@ -275,37 +295,58 @@ function NoteForm({
             }}
           />
         )}
+        <Button icon={<Check />} onClick={() => void saveAndClose()} className="ml-1">
+          Save
+        </Button>
       </div>
 
-      <div>
-        <label htmlFor={ids.title} className="sr-only">
-          Title
-        </label>
-        <input
-          id={ids.title}
-          value={title}
-          maxLength={200}
-          autoFocus={!initial}
-          placeholder="Title"
-          onChange={(e) => {
-            setTitle(e.target.value);
-            draft.current.title = e.target.value;
-            save({ title: e.target.value });
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              editor?.commands.focus('start');
-            }
-          }}
-          className="w-full bg-transparent font-display text-2xl font-bold outline-none placeholder:text-fg-subtle md:text-3xl"
-        />
+      {/* The note itself, as one sheet: status, title, formatting buttons and the text. */}
+      <div className="rounded-2xl border border-line bg-surface shadow-soft-sm transition-[border-color,box-shadow] focus-within:border-brand focus-within:ring-[3px] focus-within:ring-ring">
+        <div className="px-4 pt-4 md:px-6 md:pt-5">
+          <p className="text-xs font-semibold text-fg-muted" aria-live="polite">
+            {status === 'saving' || status === 'dirty'
+              ? 'Saving…'
+              : status === 'error'
+                ? 'Not saved'
+                : live
+                  ? `Edited ${formatRelative(live.updatedAt, now)}`
+                  : 'New note'}
+          </p>
+          <label htmlFor={ids.title} className="sr-only">
+            Title
+          </label>
+          <input
+            id={ids.title}
+            value={title}
+            maxLength={200}
+            autoFocus={!initial}
+            placeholder="Title"
+            onChange={(e) => {
+              setTitle(e.target.value);
+              draft.current.title = e.target.value;
+              save({ title: e.target.value });
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                editor?.commands.focus('start');
+              }
+            }}
+            className="mt-1 w-full bg-transparent font-display text-2xl font-bold outline-none placeholder:text-fg-subtle md:text-3xl"
+          />
+        </div>
+        {editor && (
+          <div className="px-3 pt-3 md:px-5">
+            <Toolbar editor={editor} />
+          </div>
+        )}
+        <EditorContent editor={editor} className="note-editor" />
       </div>
 
-      {editor && <Toolbar editor={editor} />}
-      <EditorContent editor={editor} className="note-editor" />
-
-      <div className="grid gap-4 md:grid-cols-2">
+      <section
+        aria-label="Note details"
+        className="grid gap-4 rounded-2xl border border-line bg-surface p-4 shadow-soft-sm md:grid-cols-2 md:p-5"
+      >
         <div>
           <label htmlFor={ids.folder} className="mb-1.5 block text-sm font-semibold">
             Folder
@@ -338,9 +379,13 @@ function NoteForm({
             }
           />
         </div>
-      </div>
+      </section>
 
-      {live && <LinksPanel noteId={live.id} />}
+      {live && (
+        <div className="rounded-2xl border border-line bg-surface p-4 shadow-soft-sm md:p-5">
+          <LinksPanel noteId={live.id} />
+        </div>
+      )}
     </article>
   );
 }

@@ -34,7 +34,7 @@ test('write a formatted note, find it by its content and keep it after reload', 
   await page.getByLabel('Search notes').fill('chlorophyll');
   await expect(page.getByRole('list', { name: 'Notes' }).getByRole('link')).toHaveCount(1);
   await page.getByLabel('Search notes').fill('mitochondria');
-  await expect(page.getByText('No notes match.')).toBeVisible();
+  await expect(page.getByText('No notes match')).toBeVisible();
 });
 
 test('link a note to a task and open it from the task', async ({ page }) => {

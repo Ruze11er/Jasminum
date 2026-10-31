@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '@/app/router';
@@ -10,6 +10,7 @@ import { notesRepo } from '@/data/repos/notes';
 import { tasksRepo } from '@/data/repos/tasks';
 import { clock } from '@/lib/clock';
 import { useTaskEditor } from '@/features/tasks/editorStore';
+import { NOTE_DRAG_TYPE } from './noteActions';
 
 beforeEach(() => {
   clock.set(new Date('2026-11-04T10:00:00').getTime());
@@ -112,13 +113,12 @@ describe('notes page', () => {
   it('creates a folder from the list', async () => {
     const user = userEvent.setup();
     renderApp();
-    await user.click(await screen.findByRole('button', { name: 'Folder' }));
+    await user.click(await screen.findByRole('button', { name: 'New folder' }));
     await user.type(screen.getByLabelText('New folder name'), 'Recipes{Enter}');
     expect(await screen.findByRole('heading', { name: 'Recipes' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Recipes/ })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    const crumbs = screen.getByRole('navigation', { name: 'Breadcrumb' });
+    expect(within(crumbs).getByText('Recipes')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByText('This folder is empty')).toBeInTheDocument();
     expect((await foldersRepo.list('notes')).map((f) => f.name)).toEqual(['Recipes']);
   });
 
@@ -204,5 +204,69 @@ describe('notes page', () => {
   it('says so when a note no longer exists', async () => {
     renderApp('/notes/missing-id');
     expect(await screen.findByText('This note no longer exists.')).toBeInTheDocument();
+  });
+});
+
+describe('notes layout', () => {
+  it('opens the editor as its own page, and Save returns to the list', async () => {
+    const user = userEvent.setup();
+    await notesRepo.create({ title: 'Shopping', contentText: 'Milk', contentJson: doc('Milk') });
+    const router = renderApp();
+    await user.click(within(await noteList()).getByRole('link', { name: /Shopping/ }));
+
+    expect(await screen.findByLabelText('Title')).toHaveValue('Shopping');
+    // The list is hidden while editing.
+    expect(screen.queryByRole('list', { name: 'Notes' })).toBeNull();
+    expect(screen.queryByLabelText('Search notes')).toBeNull();
+
+    await user.clear(screen.getByLabelText('Title'));
+    await user.type(screen.getByLabelText('Title'), 'Groceries');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByText('Note saved')).toBeInTheDocument();
+    await waitFor(() => expect(router.state.location.pathname).toBe('/notes'));
+    expect(within(await noteList()).getByRole('link', { name: /Groceries/ })).toBeVisible();
+    expect((await db.notes.toArray())[0]?.title).toBe('Groceries');
+  });
+
+  it('leaves an empty new note without saving anything', async () => {
+    const user = userEvent.setup();
+    const router = renderApp('/notes/new');
+    await screen.findByLabelText('Title');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/notes'));
+    expect(await db.notes.count()).toBe(0);
+    expect(screen.queryByText('Note saved')).toBeNull();
+  });
+
+  it('shows pinned notes in their own group', async () => {
+    await notesRepo.create({ title: 'Important', pinned: 1 });
+    await notesRepo.create({ title: 'Everyday' });
+    renderApp();
+    const pinned = await screen.findByRole('list', { name: 'Pinned notes' });
+    expect(within(pinned).getByRole('link', { name: /Important/ })).toBeInTheDocument();
+    expect(within(await noteList()).getAllByRole('link')).toHaveLength(1);
+    expect(within(await noteList()).getByRole('link', { name: /Everyday/ })).toBeInTheDocument();
+  });
+
+  it('moves a note by dropping its card on a folder, with Undo', async () => {
+    const user = userEvent.setup();
+    const folder = await foldersRepo.add('notes', 'Ideas');
+    const note = await notesRepo.create({ title: 'App idea' });
+    renderApp();
+    const tile = within(await screen.findByRole('list', { name: 'Folders' })).getByRole('button', {
+      name: /Ideas/,
+    });
+    const dataTransfer = {
+      types: [NOTE_DRAG_TYPE],
+      getData: (type: string) => (type === NOTE_DRAG_TYPE ? note.id : ''),
+      dropEffect: 'none',
+    };
+    fireEvent.dragOver(tile, { dataTransfer });
+    fireEvent.drop(tile, { dataTransfer });
+    await waitFor(async () => expect((await db.notes.get(note.id))?.folderId).toBe(folder.id));
+    expect(await screen.findByText('Moved "App idea" to Ideas')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Undo' }));
+    await waitFor(async () => expect((await db.notes.get(note.id))?.folderId).toBeNull());
   });
 });

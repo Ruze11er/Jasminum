@@ -1,26 +1,37 @@
 import { useState } from 'react';
-import { Check, ChevronLeft, FolderOpen, Palette, Pencil, Trash2 } from 'lucide-react';
+import {
+  Check,
+  ChevronLeft,
+  Folder as FolderIcon,
+  FolderOpen,
+  Palette,
+  Pencil,
+  Trash2,
+} from 'lucide-react';
 import { Button, IconButton, Input } from '@/design-system';
 import { chipColorClasses } from '@/design-system/components/chipColors';
 import type { Folder } from '@/data/types';
-import { deleteFolder, renameFolder, setFolderColor } from '@/features/folders/folderActions';
-import { FOLDER_COLOR_LABELS, FOLDER_COLORS, folderColor } from '@/features/folders/folderColor';
 import { cn } from '@/lib/cn';
-import { formatBytes } from '@/lib/format';
-import { filesLabel } from '../selectors';
+import { deleteFolder, renameFolder, setFolderColor } from './folderActions';
+import { FOLDER_COLOR_LABELS, FOLDER_COLORS, folderColor } from './folderColor';
 
 const actionClasses = 'text-current hover:bg-surface/60 hover:text-current';
 
-/** The open folder: a path back to the library, its name and size, and its settings. */
+/**
+ * The open folder: a breadcrumb back to the section, its name and what's inside, and
+ * buttons to rename it, change its color and delete it. Shared by the Library and Notes.
+ */
 export function FolderBanner({
   folder,
-  count,
-  size,
+  summary,
+  section,
   onBack,
 }: {
   folder: Folder;
-  count: number;
-  size: number;
+  /** What's inside, e.g. "3 files · 2 MB" or "Empty". */
+  summary: string;
+  /** The section the breadcrumb leads back to ("Library", "Notes"). */
+  section: string;
   onBack: () => void;
 }) {
   const [renaming, setRenaming] = useState(false);
@@ -39,7 +50,7 @@ export function FolderBanner({
               className="-ml-1 flex items-center gap-0.5 rounded-lg px-1 py-1 hover:text-fg max-md:min-h-11"
             >
               <ChevronLeft aria-hidden="true" className="size-4" />
-              Library
+              {section}
             </button>
           </li>
           <li aria-hidden="true">/</li>
@@ -80,9 +91,7 @@ export function FolderBanner({
           ) : (
             <div className="min-w-0 flex-1">
               <h2 className="truncate text-xl">{folder.name}</h2>
-              <p className="text-sm font-semibold">
-                {count ? `${filesLabel(count)} · ${formatBytes(size)}` : 'Empty'}
-              </p>
+              <p className="text-sm font-semibold">{summary}</p>
             </div>
           )}
           {!renaming && (
@@ -140,5 +149,21 @@ export function FolderBanner({
         )}
       </div>
     </div>
+  );
+}
+
+/** A small colored label naming an item's folder (on file and note cards). */
+export function FolderTag({ folder }: { folder: Folder }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex max-w-full min-w-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold',
+        chipColorClasses[folderColor(folder)],
+      )}
+    >
+      <FolderIcon aria-hidden="true" className="size-3 shrink-0" />
+      <span className="sr-only">, in folder </span>
+      <span className="truncate">{folder.name}</span>
+    </span>
   );
 }

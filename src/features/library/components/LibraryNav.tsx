@@ -1,14 +1,5 @@
 import type { ReactNode } from 'react';
-import {
-  Clock,
-  Files,
-  Folder as FolderIcon,
-  FolderPlus,
-  FolderX,
-  History,
-  Star,
-  TagIcon,
-} from 'lucide-react';
+import { Folder as FolderIcon, FolderPlus } from 'lucide-react';
 import { IconButton } from '@/design-system';
 import { chipColorClasses } from '@/design-system/components/chipColors';
 import type { Folder } from '@/data/types';
@@ -17,21 +8,13 @@ import { cn } from '@/lib/cn';
 import { moveDocument, useDocDrop } from '../moveDocument';
 import type { LibraryView } from '../selectors';
 import type { LibraryData } from '../useLibraryData';
+import { VIEW_ICONS } from '../viewIcons';
 
 export interface ViewItem {
   value: LibraryView;
   label: string;
   count: number;
 }
-
-const VIEW_ICONS: Partial<Record<LibraryView, ReactNode>> = {
-  all: <Files />,
-  recent: <Clock />,
-  opened: <History />,
-  favorites: <Star />,
-  unfiled: <FolderX />,
-  untagged: <TagIcon />,
-};
 
 const rowClasses =
   'flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-left text-sm font-semibold transition-colors aria-pressed:bg-primary-soft aria-pressed:text-primary-soft-fg not-aria-pressed:text-fg-muted not-aria-pressed:hover:bg-surface-muted not-aria-pressed:hover:text-fg';
@@ -213,38 +196,5 @@ export function LibrarySidebar({
         </div>
       </div>
     </aside>
-  );
-}
-
-/** Narrower screens: the same views as one scrollable row of chips. */
-export function ViewChips({
-  views,
-  current,
-  onSelect,
-}: {
-  views: ViewItem[];
-  current: LibraryView;
-  onSelect: (v: LibraryView) => void;
-}) {
-  return (
-    <div
-      role="group"
-      aria-label="Show"
-      className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:mx-0 md:px-0"
-    >
-      {views.map((v) => (
-        <button
-          key={v.value}
-          type="button"
-          aria-pressed={current === v.value}
-          onClick={() => onSelect(v.value)}
-          className="flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold whitespace-nowrap transition-colors aria-pressed:bg-primary aria-pressed:text-on-primary not-aria-pressed:bg-surface-muted not-aria-pressed:text-fg-muted not-aria-pressed:hover:text-fg max-md:h-10 [&_svg]:size-4"
-        >
-          <span aria-hidden="true">{VIEW_ICONS[v.value]}</span>
-          {v.label}
-          <span className="text-xs">{v.count}</span>
-        </button>
-      ))}
-    </div>
   );
 }

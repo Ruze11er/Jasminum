@@ -5,24 +5,22 @@
 
 .note-editor {
   min-height: 50vh;
-  border: 1px solid var(--line);
-  border-radius: 1rem;
-  background: var(--surface);
   cursor: text;
 }
 
+/* The sheet around the editor (NoteEditor.tsx) draws the border and the focus ring. */
 .note-content {
   min-height: 50vh;
-  padding: 0.875rem 1rem 1.5rem;
+  padding: 1rem 1rem 2rem;
   outline: none;
   font-size: max(16px, 1rem);
   line-height: 1.65;
   overflow-wrap: anywhere;
 }
-
-.note-editor:focus-within {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px var(--ring);
+@media (min-width: 768px) {
+  .note-content {
+    padding: 1rem 1.5rem 2.5rem;
+  }
 }
 
 .note-content > * + * {

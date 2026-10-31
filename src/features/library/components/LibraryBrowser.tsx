@@ -8,7 +8,9 @@ import {
   SearchX,
   Upload,
 } from 'lucide-react';
-import { EmptyState, Input, SegmentedControl, Select } from '@/design-system';
+import { EmptyState, FilterChips, Input, SegmentedControl, Select } from '@/design-system';
+import { FolderBanner } from '@/features/folders/FolderBanner';
+import { FolderGrid } from '@/features/folders/FolderGrid';
 import { clock } from '@/lib/clock';
 import { DOCUMENT_KINDS, KIND_LABELS } from '@/lib/fileKinds';
 import { formatBytes } from '@/lib/format';
@@ -17,6 +19,7 @@ import { useUiStore, type LibraryLayout } from '@/stores/uiStore';
 import type { DocumentKind } from '@/data/types';
 import { useImportQueue } from '../importStore';
 import {
+  filesLabel,
   folderIdOfView,
   libraryCounts,
   selectDocuments,
@@ -27,10 +30,10 @@ import {
 import type { LibraryData } from '../useLibraryData';
 import { DocumentList } from './DocumentList';
 import { FilePickerButton, primaryButtonClasses } from './FilePickerButton';
-import { FolderBanner } from './FolderBanner';
-import { FolderGrid } from './FolderGrid';
 import { ImportPanel } from './ImportPanel';
-import { LibrarySidebar, ViewChips, type ViewItem } from './LibraryNav';
+import { DOC_DRAG_TYPE, moveDocument } from '../moveDocument';
+import { VIEW_ICONS } from '../viewIcons';
+import { LibrarySidebar, type ViewItem } from './LibraryNav';
 
 /**
  * Browse the library: views and folders (a side column on wide screens, chips and tiles
@@ -72,6 +75,10 @@ export function LibraryBrowser({
     { value: 'untagged', label: 'Untagged', count: counts.untagged },
   ];
   const viewLabel = views.find((v) => v.value === query.view)?.label ?? 'Files';
+  const folderSummary = (id: string) => {
+    const n = counts.byFolder.get(id) ?? 0;
+    return n ? `${filesLabel(n)} · ${formatBytes(counts.sizeByFolder.get(id) ?? 0)}` : 'Empty';
+  };
   // Folders show as tiles on the "All files" view; a search narrows them too.
   const shownFolders = query.view === 'all' ? selectFolders(data.folders, text) : [];
 
@@ -201,15 +208,20 @@ export function LibraryBrowser({
       </div>
 
       {!wide && (
-        <ViewChips views={views} current={query.view} onSelect={(v) => onQuery({ view: v })} />
+        <FilterChips
+          label="Show"
+          items={views.map((v) => ({ ...v, icon: VIEW_ICONS[v.value] }))}
+          value={query.view}
+          onChange={(v) => onQuery({ view: v })}
+        />
       )}
 
       {folder && (
         <FolderBanner
           key={folder.id}
           folder={folder}
-          count={counts.byFolder.get(folder.id) ?? 0}
-          size={counts.sizeByFolder.get(folder.id) ?? 0}
+          summary={folderSummary(folder.id)}
+          section="Library"
           onBack={() => onQuery({ view: 'all' })}
         />
       )}
@@ -218,10 +230,16 @@ export function LibraryBrowser({
 
       {query.view === 'all' && (
         <FolderGrid
+          scope="documents"
           folders={shownFolders}
-          data={data}
-          counts={counts.byFolder}
-          sizes={counts.sizeByFolder}
+          summaryOf={(f) => folderSummary(f.id)}
+          drop={{
+            type: DOC_DRAG_TYPE,
+            onDrop: (id, f) => {
+              const doc = data.docs.find((d) => d.id === id);
+              if (doc) void moveDocument(doc, f);
+            },
+          }}
           creating={creatingFolder}
           onCreatingChange={setCreatingFolder}
           onOpen={(f) => onQuery({ view: `folder:${f.id}` })}

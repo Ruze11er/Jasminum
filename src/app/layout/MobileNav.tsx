@@ -1,4 +1,4 @@
-import { Link, NavLink } from 'react-router';
+import { Link, NavLink, useLocation } from 'react-router';
 import { Plus, Search } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { useUiStore } from '@/stores/uiStore';
@@ -94,6 +94,9 @@ export function BottomNav() {
 /** Floating "+" button above the bottom bar on phones. */
 export function QuickAddFab() {
   const open = useUiStore((s) => s.setQuickAddOpen);
+  // Writing a note: the button would sit on top of the text, so it steps aside.
+  const writing = /^\/notes\/[^/]+/.test(useLocation().pathname);
+  if (writing) return null;
   return (
     <button
       type="button"
