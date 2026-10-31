@@ -9,7 +9,7 @@ import { foldersRepo } from '@/data/repos/folders';
 import { tagsRepo } from '@/data/repos/tags';
 import type { FileStore } from '@/data/files/FileStore';
 import { clock } from '@/lib/clock';
-import { DOC_DRAG_TYPE } from './moveDocument';
+import { DOC_DRAG_TYPE } from './documentActions';
 
 /*
  * jsdom Blobs can't go into the in-memory IndexedDB and have no stream(), so these UI
@@ -300,5 +300,58 @@ describe('library folders', () => {
     expect(await screen.findByText('Moved "Homework" to School')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Undo' }));
     await waitFor(async () => expect((await db.documents.get(doc.id))?.folderId).toBeNull());
+  });
+});
+
+describe('library selection', () => {
+  it('selects several files, moves them to a folder, then deletes them with Undo', async () => {
+    const user = userEvent.setup();
+    const folder = await foldersRepo.add('documents', 'Exams');
+    await addDoc({ title: 'Paper one' });
+    await addDoc({ title: 'Paper two!' });
+    await addDoc({ title: 'Other file' });
+    renderApp();
+    await fileList();
+
+    await user.click(screen.getByRole('button', { name: 'Select' }));
+    const files = await fileList();
+    // In selection mode the cards select instead of opening.
+    await user.click(within(files).getByRole('button', { name: /Paper one/ }));
+    await user.click(within(files).getByRole('button', { name: /Paper two/ }));
+    const bar = screen.getByRole('region', { name: 'Selection' });
+    expect(within(bar).getByText('2 selected')).toBeInTheDocument();
+
+    await user.selectOptions(within(bar).getByLabelText('Move to folder'), 'Exams');
+    await waitFor(async () =>
+      expect((await db.documents.toArray()).filter((d) => d.folderId === folder.id)).toHaveLength(
+        2,
+      ),
+    );
+    expect(await screen.findByText('Moved 2 files to Exams')).toBeInTheDocument();
+    // The action ends selection mode.
+    expect(screen.queryByRole('region', { name: 'Selection' })).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Select' }));
+    await user.click(screen.getByRole('button', { name: 'Select all' }));
+    expect(screen.getByText('3 selected')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    const toastEl = (await screen.findByText('3 files moved to Trash')).closest('[role="status"]');
+    await waitFor(async () =>
+      expect((await db.documents.toArray()).every((d) => d.deletedAt)).toBe(true),
+    );
+    await user.click(within(toastEl as HTMLElement).getByRole('button', { name: 'Undo' }));
+    await waitFor(async () =>
+      expect((await db.documents.toArray()).every((d) => !d.deletedAt)).toBe(true),
+    );
+  });
+
+  it('starts selecting from the check on a card', async () => {
+    const user = userEvent.setup();
+    await addDoc({ title: 'Syllabus' });
+    renderApp();
+    await fileList();
+    await user.click(screen.getByRole('button', { name: 'Select Syllabus' }));
+    expect(screen.getByText('1 selected')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Syllabus/, pressed: true })).toBeInTheDocument();
   });
 });

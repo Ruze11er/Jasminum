@@ -8,13 +8,21 @@ import {
   SearchX,
   Upload,
 } from 'lucide-react';
-import { EmptyState, FilterChips, Input, SegmentedControl, Select } from '@/design-system';
+import {
+  EmptyState,
+  FilterChips,
+  Input,
+  SegmentedControl,
+  Select,
+  SelectButton,
+} from '@/design-system';
 import { FolderBanner } from '@/features/folders/FolderBanner';
 import { FolderGrid } from '@/features/folders/FolderGrid';
 import { clock } from '@/lib/clock';
 import { DOCUMENT_KINDS, KIND_LABELS } from '@/lib/fileKinds';
 import { formatBytes } from '@/lib/format';
 import { useIsWide } from '@/lib/useMediaQuery';
+import { useSelection } from '@/lib/useSelection';
 import { useUiStore, type LibraryLayout } from '@/stores/uiStore';
 import type { DocumentKind } from '@/data/types';
 import { useImportQueue } from '../importStore';
@@ -31,7 +39,8 @@ import type { LibraryData } from '../useLibraryData';
 import { DocumentList } from './DocumentList';
 import { FilePickerButton, primaryButtonClasses } from './FilePickerButton';
 import { ImportPanel } from './ImportPanel';
-import { DOC_DRAG_TYPE, moveDocument } from '../moveDocument';
+import { LibrarySelectionBar } from './LibrarySelectionBar';
+import { DOC_DRAG_TYPE, moveDocument } from '../documentActions';
 import { VIEW_ICONS } from '../viewIcons';
 import { LibrarySidebar, type ViewItem } from './LibraryNav';
 
@@ -58,6 +67,7 @@ export function LibraryBrowser({
   const enqueue = useImportQueue((s) => s.enqueue);
   const ctx = { activeFolderIds: data.activeFolderIds, tagById: data.tagById, now };
   const docs = selectDocuments(data.docs, query, ctx);
+  const selection = useSelection(docs.map((d) => d.id));
   const counts = libraryCounts(data.docs, ctx);
   const folderId = folderIdOfView(query.view);
   const folder = folderId ? data.folderById.get(folderId) : undefined;
@@ -248,18 +258,28 @@ export function LibraryBrowser({
       )}
 
       <section aria-labelledby="files-heading" className="space-y-3">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <h2 id="files-heading" className="flex flex-1 items-baseline gap-2 text-base">
-            {folder ? 'Files' : viewLabel}
-            <span className="text-sm font-semibold text-fg-muted">{docs.length}</span>
-          </h2>
-          {(docs.length > 0 || filtering) && (
-            <>
-              {filters}
-              {layoutToggle}
-            </>
-          )}
-        </div>
+        {selection.active ? (
+          <>
+            <h2 id="files-heading" className="sr-only">
+              {folder ? 'Files' : viewLabel}
+            </h2>
+            <LibrarySelectionBar selection={selection} data={data} />
+          </>
+        ) : (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <h2 id="files-heading" className="flex flex-1 items-baseline gap-2 text-base">
+              {folder ? 'Files' : viewLabel}
+              <span className="text-sm font-semibold text-fg-muted">{docs.length}</span>
+            </h2>
+            {(docs.length > 0 || filtering) && (
+              <>
+                {filters}
+                {docs.length > 0 && <SelectButton selection={selection} />}
+                {layoutToggle}
+              </>
+            )}
+          </div>
+        )}
 
         {docs.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-line-strong bg-surface">
@@ -274,6 +294,7 @@ export function LibraryBrowser({
               search={search}
               now={now}
               showFolder={!folder}
+              selection={selection}
             />
             <p className="text-center text-sm text-fg-muted">
               {docs.length} of {counts.all} {counts.all === 1 ? 'file' : 'files'} ·{' '}

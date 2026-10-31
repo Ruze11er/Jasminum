@@ -5,7 +5,7 @@ import { chipColorClasses } from '@/design-system/components/chipColors';
 import type { Folder } from '@/data/types';
 import { folderColor } from '@/features/folders/folderColor';
 import { cn } from '@/lib/cn';
-import { moveDocument, useDocDrop } from '../moveDocument';
+import { moveDocument, useDocDrop } from '../documentActions';
 import type { LibraryView } from '../selectors';
 import type { LibraryData } from '../useLibraryData';
 import { VIEW_ICONS } from '../viewIcons';

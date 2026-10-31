@@ -9,13 +9,23 @@ import {
   Plus,
   SlidersHorizontal,
 } from 'lucide-react';
-import { Button, Card, EmptyState, PageHeader, SegmentedControl, Select } from '@/design-system';
+import {
+  Button,
+  Card,
+  EmptyState,
+  PageHeader,
+  SegmentedControl,
+  Select,
+  SelectButton,
+} from '@/design-system';
 import type { Priority } from '@/data/types';
 import { clock } from '@/lib/clock';
 import { cn } from '@/lib/cn';
 import { localDateOf } from '@/lib/dates';
+import { useSelection } from '@/lib/useSelection';
 import { QuickAddTask } from './components/QuickAddTask';
 import { TaskItem } from './components/TaskItem';
+import { TasksSelectionBar } from './components/TasksSelectionBar';
 import { useTaskEditor } from './editorStore';
 import {
   buildView,
@@ -99,6 +109,8 @@ export default function TasksPage() {
     [data, today, filters],
   );
   const dueDate = defaultDueDate(view, today);
+  const shown = useMemo(() => groups.flatMap((g) => g.tasks), [groups]);
+  const selection = useSelection(shown.map((t) => t.id));
 
   return (
     <>
@@ -156,6 +168,9 @@ export default function TasksPage() {
           >
             <span className="max-sm:sr-only">Filter</span>
           </Button>
+          {shown.length > 0 && !selection.active && (
+            <SelectButton selection={selection} className="h-11" />
+          )}
         </div>
         {showFilters && data && (
           <div
@@ -214,6 +229,12 @@ export default function TasksPage() {
         )}
       </div>
 
+      {selection.active && (
+        <div className="mb-4">
+          <TasksSelectionBar selection={selection} tasks={shown} today={today} />
+        </div>
+      )}
+
       {!data ? null : groups.length === 0 ? (
         <Card>
           <EmptyState
@@ -236,7 +257,7 @@ export default function TasksPage() {
                     {group.tasks.length}
                   </span>
                 </h2>
-                {group.key === 'overdue' && (
+                {group.key === 'overdue' && !selection.active && (
                   <Button
                     size="sm"
                     variant="secondary"
@@ -260,6 +281,7 @@ export default function TasksPage() {
                       checklist={data.checklistByTask.get(task.id)}
                       onOpen={(t) => openEdit(t.id)}
                       hideDate={group.key === task.dueDate || group.key === 'today'}
+                      selection={selection}
                     />
                   ))}
                 </ul>

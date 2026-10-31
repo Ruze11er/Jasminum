@@ -205,6 +205,16 @@ for (const scheme of ['light', 'dark'] as const) {
       await expect(page.getByLabel('File contents')).toContainText('Dune');
       await audit(page, 'file', found);
 
+      // Selection mode: the action bar and selected cards.
+      await page.goto('/notes');
+      await page.getByRole('button', { name: 'Select', exact: true }).click();
+      await page
+        .getByRole('list', { name: 'Pinned notes' })
+        .getByRole('button', { name: /Lecture notes/ })
+        .click();
+      await expect(page.getByText('1 selected')).toBeVisible();
+      await audit(page, 'notes selection', found);
+
       // Dialogs.
       await page.goto('/tasks');
       await page.getByRole('button', { name: 'Edit task: Read chapter 4' }).click();

@@ -28,6 +28,44 @@ export async function deleteTask(task: Task) {
   });
 }
 
+const tasksLabel = (n: number) => `${n} ${n === 1 ? 'task' : 'tasks'}`;
+
+/** Marks tasks done (repeating ones get their next copy), with Undo. */
+export async function completeTasks(tasks: Task[]) {
+  const open = tasks.filter((t) => t.status !== 'done');
+  for (const t of open) await tasksRepo.complete(t.id);
+  toast({
+    message: open.length === 1 ? 'Task done' : `${tasksLabel(open.length)} done`,
+    action: {
+      label: 'Undo',
+      onClick: () => {
+        for (const t of open) void tasksRepo.reopen(t.id);
+      },
+    },
+  });
+}
+
+/** Marks done tasks as not done again. */
+export async function reopenTasks(tasks: Task[]) {
+  const done = tasks.filter((t) => t.status === 'done');
+  for (const t of done) await tasksRepo.reopen(t.id);
+  toast({ message: `${tasksLabel(done.length)} marked not done` });
+}
+
+/** Moves tasks to the Trash, with Undo. */
+export async function deleteTasks(tasks: Task[]) {
+  for (const t of tasks) await tasksRepo.softDelete(t.id);
+  toast({
+    message: tasks.length === 1 ? 'Moved to Trash' : `${tasksLabel(tasks.length)} moved to Trash`,
+    action: {
+      label: 'Undo',
+      onClick: () => {
+        for (const t of tasks) void tasksRepo.restore(t.id);
+      },
+    },
+  });
+}
+
 /** Moves tasks to a new date, e.g. "Move overdue to today". */
 export async function moveTasks(tasks: Task[], to: string) {
   try {

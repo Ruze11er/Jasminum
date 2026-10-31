@@ -1,17 +1,18 @@
-import { Link } from 'react-router';
 import { CircleAlert, Star } from 'lucide-react';
+import { SelectableLink } from '@/design-system';
 import type { LibraryDocument } from '@/data/types';
 import { FolderTag } from '@/features/folders/FolderBanner';
 import { dragSource } from '@/features/folders/useItemDrop';
 import type { LibraryLayout } from '@/stores/uiStore';
 import { cn } from '@/lib/cn';
 import { formatBytes, formatRelative } from '@/lib/format';
+import type { Selection } from '@/lib/useSelection';
 import { KIND_LABELS } from '@/lib/fileKinds';
-import { DOC_DRAG_TYPE } from '../moveDocument';
+import { DOC_DRAG_TYPE } from '../documentActions';
 import type { LibraryData } from '../useLibraryData';
 import { KindIcon } from './KindIcon';
 
-/** Files as a grid of cards or a compact list. Each opens the file's page. */
+/** Files as a grid of cards or a compact list. Each opens the file's page, or is selected. */
 export function DocumentList({
   docs,
   data,
@@ -19,6 +20,7 @@ export function DocumentList({
   search,
   now,
   showFolder,
+  selection,
 }: {
   docs: LibraryDocument[];
   data: LibraryData;
@@ -28,6 +30,7 @@ export function DocumentList({
   now: number;
   /** Label each file with its folder (off inside a folder, where it's obvious). */
   showFolder: boolean;
+  selection: Selection;
 }) {
   const meta = (d: LibraryDocument) =>
     `${d.ext ? d.ext.toUpperCase() : KIND_LABELS[d.kind].one} · ${formatBytes(d.size)} · ${formatRelative(d.addedAt, now)}`;
@@ -58,9 +61,13 @@ export function DocumentList({
       >
         {docs.map((d) => (
           <li key={d.id}>
-            <Link
+            <SelectableLink
+              selection={selection}
+              id={d.id}
+              label={d.title}
               to={`/library/${d.id}${search}`}
-              {...dragProps(d)}
+              linkProps={dragProps(d)}
+              check="inline"
               className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-surface-muted"
             >
               <KindIcon kind={d.kind} className="size-9" />
@@ -74,7 +81,7 @@ export function DocumentList({
                 </span>
               </span>
               <span className="hidden max-w-[40%] shrink-0 sm:flex">{folderTag(d)}</span>
-            </Link>
+            </SelectableLink>
           </li>
         ))}
       </ul>
@@ -85,9 +92,12 @@ export function DocumentList({
     <ul aria-label="Files" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
       {docs.map((d) => (
         <li key={d.id} className="min-w-0">
-          <Link
+          <SelectableLink
+            selection={selection}
+            id={d.id}
+            label={d.title}
             to={`/library/${d.id}${search}`}
-            {...dragProps(d)}
+            linkProps={dragProps(d)}
             className={cn(
               'flex h-full flex-col gap-3 rounded-2xl border border-line bg-surface p-3.5 shadow-soft-sm transition-[border-color,box-shadow,transform] duration-200',
               'hover:-translate-y-0.5 hover:border-primary/70 hover:shadow-soft-lg hover:ring-1 hover:ring-primary/70',
@@ -104,7 +114,7 @@ export function DocumentList({
               </span>
             </span>
             {folderTag(d) && <span className="flex min-w-0">{folderTag(d)}</span>}
-          </Link>
+          </SelectableLink>
         </li>
       ))}
     </ul>

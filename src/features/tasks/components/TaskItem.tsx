@@ -8,12 +8,13 @@ import {
   Trash2,
   type LucideIcon,
 } from 'lucide-react';
-import { Checkbox, Chip, type ChipColor } from '@/design-system';
+import { Checkbox, Chip, SelectCheck, type ChipColor } from '@/design-system';
 import { tasksRepo } from '@/data/repos/tasks';
 import type { Category, ChecklistItem, Tag, Task } from '@/data/types';
 import { cn } from '@/lib/cn';
 import { dayLabel, timeLabel } from '@/lib/dates';
 import { useOptimisticFlag } from '@/lib/useOptimisticFlag';
+import type { Selection } from '@/lib/useSelection';
 import { useSwipe } from '@/lib/useSwipe';
 import { deleteTask, toggleTaskDone } from '../taskActions';
 import { PriorityBadge } from './PriorityBadge';
@@ -59,6 +60,8 @@ export interface TaskItemProps {
   onOpen: (task: Task) => void;
   /** Hide the date when the group heading already shows it. */
   hideDate?: boolean;
+  /** In selection mode the row selects itself instead of opening or completing. */
+  selection?: Selection;
 }
 
 export function TaskItem({
@@ -69,6 +72,7 @@ export function TaskItem({
   checklist = [],
   onOpen,
   hideDate,
+  selection,
 }: TaskItemProps) {
   const [expanded, setExpanded] = useState(false);
   const [done, toggleDone] = useOptimisticFlag(task.status === 'done');
@@ -83,6 +87,74 @@ export function TaskItem({
     onSwipeLeft: () => void deleteTask(task),
   });
   const swiping = swipe.offset !== 0;
+
+  // Title and details, shared by the normal row and the selection row.
+  const summary = (
+    <>
+      <span className={cn('block font-semibold break-words', done && 'text-fg-muted line-through')}>
+        {task.title}
+      </span>
+      <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1.5 empty:hidden">
+        {task.dueDate && !hideDate && (
+          <Meta
+            icon={CalendarDays}
+            className={
+              overdue ? 'text-danger' : task.dueDate === today ? 'text-link' : 'text-fg-muted'
+            }
+          >
+            {dayLabel(task.dueDate, today)}
+            {task.dueTime && ` · ${timeLabel(task.dueTime)}`}
+          </Meta>
+        )}
+        {hideDate && task.dueTime && (
+          <Meta icon={CalendarDays} className="text-fg-muted">
+            {timeLabel(task.dueTime)}
+          </Meta>
+        )}
+        {task.rrule && (
+          <Meta icon={Repeat} className="text-fg-muted">
+            <span className="sr-only">Repeats</span>
+          </Meta>
+        )}
+        {checklist.length > 0 && (
+          <Meta icon={ListChecks} className="text-fg-muted">
+            {doneCount}/{checklist.length}
+          </Meta>
+        )}
+        <PriorityBadge priority={task.priority} />
+        {category && (
+          <Chip color={category.color as ChipColor} className="h-6 text-xs">
+            {category.name}
+          </Chip>
+        )}
+        {tags.map((t) => (
+          <Chip key={t.id} color="neutral" className="h-6 text-xs">
+            #{t.name}
+          </Chip>
+        ))}
+      </span>
+    </>
+  );
+
+  if (selection?.active) {
+    const selected = selection.isSelected(task.id);
+    return (
+      <li>
+        <button
+          type="button"
+          aria-pressed={selected}
+          onClick={(e) => selection.toggle(task.id, e.shiftKey)}
+          className={cn(
+            'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors md:px-5',
+            selected ? 'bg-primary-soft/60' : 'bg-surface hover:bg-surface-muted',
+          )}
+        >
+          <SelectCheck checked={selected} className="mt-0.5" />
+          <span className="min-w-0 flex-1">{summary}</span>
+        </button>
+      </li>
+    );
+  }
 
   return (
     <li className="group/task relative overflow-hidden">
@@ -133,50 +205,7 @@ export function TaskItem({
           className="min-w-0 flex-1 text-left"
           aria-label={`Edit task: ${task.title}`}
         >
-          <span
-            className={cn('block font-semibold break-words', done && 'text-fg-muted line-through')}
-          >
-            {task.title}
-          </span>
-          <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1.5 empty:hidden">
-            {task.dueDate && !hideDate && (
-              <Meta
-                icon={CalendarDays}
-                className={
-                  overdue ? 'text-danger' : task.dueDate === today ? 'text-link' : 'text-fg-muted'
-                }
-              >
-                {dayLabel(task.dueDate, today)}
-                {task.dueTime && ` · ${timeLabel(task.dueTime)}`}
-              </Meta>
-            )}
-            {hideDate && task.dueTime && (
-              <Meta icon={CalendarDays} className="text-fg-muted">
-                {timeLabel(task.dueTime)}
-              </Meta>
-            )}
-            {task.rrule && (
-              <Meta icon={Repeat} className="text-fg-muted">
-                <span className="sr-only">Repeats</span>
-              </Meta>
-            )}
-            {checklist.length > 0 && (
-              <Meta icon={ListChecks} className="text-fg-muted">
-                {doneCount}/{checklist.length}
-              </Meta>
-            )}
-            <PriorityBadge priority={task.priority} />
-            {category && (
-              <Chip color={category.color as ChipColor} className="h-6 text-xs">
-                {category.name}
-              </Chip>
-            )}
-            {tags.map((t) => (
-              <Chip key={t.id} color="neutral" className="h-6 text-xs">
-                #{t.name}
-              </Chip>
-            ))}
-          </span>
+          {summary}
         </button>
         {checklist.length > 0 && (
           <button

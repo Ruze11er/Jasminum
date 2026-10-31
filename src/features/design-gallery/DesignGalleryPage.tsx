@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react';
+import { useSelection } from '@/lib/useSelection';
 import { BookOpen, Heart, Plus, Search, Star, Tag, Trash2 } from 'lucide-react';
 import {
+  BulkAction,
   Button,
   Card,
   CardHeader,
@@ -16,6 +18,9 @@ import {
   PageHeader,
   ProgressRing,
   SegmentedControl,
+  SelectButton,
+  SelectCheck,
+  SelectionBar,
   Sheet,
   Textarea,
 } from '@/design-system';
@@ -61,6 +66,8 @@ export default function DesignGalleryPage() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [progress, setProgress] = useState(0.6);
   const [chip, setChip] = useState<'all' | 'recent' | 'favorites'>('all');
+  const demoItems = ['Apples', 'Bread', 'Cheese'];
+  const demo = useSelection(demoItems);
 
   return (
     <>
@@ -170,6 +177,31 @@ export default function DesignGalleryPage() {
           <Card tone="muted">Muted card</Card>
           <Card tone="pink">Pink card</Card>
         </div>
+
+        <Section title="Selection">
+          {demo.active ? (
+            <SelectionBar selection={demo}>
+              <BulkAction icon={<Trash2 />} label="Delete" variant="danger" onClick={demo.exit} />
+            </SelectionBar>
+          ) : (
+            <SelectButton selection={demo} />
+          )}
+          <ul aria-label="Selection example" className="mt-3 space-y-1">
+            {demoItems.map((item) => (
+              <li key={item}>
+                <button
+                  type="button"
+                  aria-pressed={demo.isSelected(item)}
+                  onClick={(e) => demo.toggle(item, e.shiftKey)}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-surface-muted aria-pressed:bg-primary-soft/60"
+                >
+                  <SelectCheck checked={demo.isSelected(item)} />
+                  {item}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Section>
 
         <Section title="Filter chips">
           <FilterChips

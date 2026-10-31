@@ -270,3 +270,55 @@ describe('notes layout', () => {
     await waitFor(async () => expect((await db.notes.get(note.id))?.folderId).toBeNull());
   });
 });
+
+describe('notes selection', () => {
+  it('selects a range with Shift, pins them, and deletes with Undo', async () => {
+    const user = userEvent.setup();
+    for (const title of ['One', 'Two', 'Three', 'Four']) {
+      await notesRepo.create({ title });
+      clock.set(clock.now() + 1000);
+    }
+    renderApp();
+    await user.click(await screen.findByRole('button', { name: 'Select' }));
+    const list = await noteList();
+    // Last edited first: Four, Three, Two, One.
+    await user.click(within(list).getByRole('button', { name: /Four/ }));
+    await user.keyboard('{Shift>}');
+    await user.click(within(list).getByRole('button', { name: /Two/ }));
+    await user.keyboard('{/Shift}');
+    expect(screen.getByText('3 selected')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Pin' }));
+    expect(await screen.findByText('Pinned 3 notes')).toBeInTheDocument();
+    await waitFor(async () =>
+      expect(
+        (await db.notes.toArray())
+          .filter((n) => n.pinned)
+          .map((n) => n.title)
+          .sort(),
+      ).toEqual(['Four', 'Three', 'Two']),
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Select' }));
+    await user.click(screen.getByRole('button', { name: 'Select all' }));
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    expect(await screen.findByText('4 notes moved to Trash')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Undo' }));
+    await waitFor(async () =>
+      expect((await db.notes.toArray()).every((n) => !n.deletedAt)).toBe(true),
+    );
+  });
+
+  it('Escape leaves selection mode and puts focus back on Select', async () => {
+    const user = userEvent.setup();
+    await notesRepo.create({ title: 'Alpha' });
+    renderApp();
+    await user.click(await screen.findByRole('button', { name: 'Select' }));
+    expect(screen.getByRole('region', { name: 'Selection' })).toHaveFocus();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('region', { name: 'Selection' })).toBeNull();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Select' })).toHaveFocus());
+    // Cards open notes again.
+    expect(within(await noteList()).getByRole('link', { name: /Alpha/ })).toBeInTheDocument();
+  });
+});

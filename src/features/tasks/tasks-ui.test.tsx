@@ -153,3 +153,34 @@ describe('home and global add', () => {
     expect(await screen.findByRole('dialog', { name: 'New task' })).toBeInTheDocument();
   });
 });
+
+describe('tasks selection', () => {
+  it('selects tasks and marks them done, with Undo, then moves them to tomorrow', async () => {
+    const user = userEvent.setup();
+    for (const title of ['Read', 'Write', 'Rest'])
+      await tasksRepo.create({ title, dueDate: TODAY });
+    renderApp();
+    await group(/^Today/);
+    await user.click(screen.getByRole('button', { name: 'Select' }));
+    await user.click(screen.getByRole('button', { name: /^Read/ }));
+    await user.click(screen.getByRole('button', { name: /^Write/ }));
+    expect(screen.getByText('2 selected')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    expect(await screen.findByText('2 tasks done')).toBeInTheDocument();
+    await waitFor(async () =>
+      expect((await db.tasks.toArray()).filter((t) => t.status === 'done')).toHaveLength(2),
+    );
+    await user.click(screen.getByRole('button', { name: 'Undo' }));
+    await waitFor(async () =>
+      expect((await db.tasks.toArray()).every((t) => t.status !== 'done')).toBe(true),
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Select' }));
+    await user.click(screen.getByRole('button', { name: 'Select all' }));
+    await user.selectOptions(screen.getByLabelText('Move to day'), 'Tomorrow');
+    await waitFor(async () =>
+      expect((await db.tasks.toArray()).every((t) => t.dueDate === '2026-10-31')).toBe(true),
+    );
+  });
+});

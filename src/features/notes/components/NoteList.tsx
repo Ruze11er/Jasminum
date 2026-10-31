@@ -1,7 +1,14 @@
 import { useState, type ReactNode } from 'react';
-import { Link } from 'react-router';
 import { FolderX, NotebookPen, NotebookText, Pin, Search, SearchX, Star } from 'lucide-react';
-import { Button, EmptyState, FilterChips, Input, Select } from '@/design-system';
+import {
+  Button,
+  EmptyState,
+  FilterChips,
+  Input,
+  SelectableLink,
+  Select,
+  SelectButton,
+} from '@/design-system';
 import { noteTitle } from '@/data/repos/notes';
 import type { Note } from '@/data/types';
 import { FolderBanner, FolderTag } from '@/features/folders/FolderBanner';
@@ -11,7 +18,9 @@ import { dragSource } from '@/features/folders/useItemDrop';
 import { clock } from '@/lib/clock';
 import { cn } from '@/lib/cn';
 import { formatRelative } from '@/lib/format';
+import { useSelection, type Selection } from '@/lib/useSelection';
 import { moveNote, NOTE_DRAG_TYPE } from '../noteActions';
+import { NotesSelectionBar } from './NotesSelectionBar';
 import {
   folderIdOf,
   notesLabel,
@@ -31,21 +40,21 @@ function NoteCard({
   search,
   showFolder,
   now,
+  selection,
 }: {
   note: Note;
-  data: NotesData;
-  search: string;
-  showFolder: boolean;
-  now: number;
-}) {
+} & CardContext) {
   const title = noteTitle(note);
   const preview = snippet(note, 220);
   const folder = showFolder && note.folderId ? data.folderById.get(note.folderId) : undefined;
   const tags = note.tagIds.flatMap((id) => data.tagById.get(id) ?? []).slice(0, 3);
   return (
-    <Link
+    <SelectableLink
+      selection={selection}
+      id={note.id}
+      label={title || 'Untitled'}
       to={`/notes/${note.id}${search}`}
-      {...dragSource(NOTE_DRAG_TYPE, note.id)}
+      linkProps={dragSource(NOTE_DRAG_TYPE, note.id)}
       className={cn(
         'flex h-full min-h-36 flex-col rounded-2xl border border-line bg-surface p-4 shadow-soft-sm transition-[border-color,box-shadow,transform] duration-200',
         'hover:-translate-y-0.5 hover:border-primary/70 hover:shadow-soft-lg hover:ring-1 hover:ring-primary/70',
@@ -81,7 +90,7 @@ function NoteCard({
           </span>
         ))}
       </span>
-    </Link>
+    </SelectableLink>
   );
 }
 
@@ -97,7 +106,13 @@ function NoteGrid({ label, notes, ...card }: { label: string; notes: Note[] } & 
   );
 }
 
-type CardContext = { data: NotesData; search: string; showFolder: boolean; now: number };
+type CardContext = {
+  data: NotesData;
+  search: string;
+  showFolder: boolean;
+  now: number;
+  selection: Selection;
+};
 
 const GroupTitle = ({ children }: { children: string }) => (
   <h3 className="mb-2 text-xs font-bold tracking-wide text-fg-muted uppercase">{children}</h3>
@@ -145,7 +160,8 @@ export function NoteList({
   // Pinned notes get their own group, except in the Pinned view (where all are pinned).
   const pinned = query.scope === 'pinned' ? [] : notes.filter((n) => n.pinned);
   const others = query.scope === 'pinned' ? notes : notes.filter((n) => !n.pinned);
-  const card: CardContext = { data, search, showFolder: !folder, now };
+  const selection = useSelection([...pinned, ...others].map((n) => n.id));
+  const card: CardContext = { data, search, showFolder: !folder, now, selection };
 
   let empty;
   if (counts.all === 0 && !folder) {
@@ -229,49 +245,59 @@ export function NoteList({
       )}
 
       <section aria-labelledby="notes-heading" className="space-y-3">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <h2 id="notes-heading" className="flex flex-1 items-baseline gap-2 text-base">
-            {folder ? 'Notes' : scopeLabel}
-            <span className="text-sm font-semibold text-fg-muted">{notes.length}</span>
-          </h2>
-          {(notes.length > 0 || filtering) && (
-            <div className="flex w-full gap-2 sm:w-auto">
-              {data.tags.length > 0 && (
+        {selection.active ? (
+          <>
+            <h2 id="notes-heading" className="sr-only">
+              {folder ? 'Notes' : scopeLabel}
+            </h2>
+            <NotesSelectionBar selection={selection} data={data} />
+          </>
+        ) : (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <h2 id="notes-heading" className="flex flex-1 items-baseline gap-2 text-base">
+              {folder ? 'Notes' : scopeLabel}
+              <span className="text-sm font-semibold text-fg-muted">{notes.length}</span>
+            </h2>
+            {notes.length > 0 && <SelectButton selection={selection} />}
+            {(notes.length > 0 || filtering) && (
+              <div className="order-last flex w-full gap-2 sm:order-none sm:w-auto">
+                {data.tags.length > 0 && (
+                  <div className="min-w-0 flex-1 sm:w-40 sm:flex-none">
+                    <label htmlFor="note-tag" className="sr-only">
+                      Tag
+                    </label>
+                    <Select
+                      id="note-tag"
+                      value={query.tagId ?? ''}
+                      onChange={(e) => onQuery({ tagId: e.target.value || null })}
+                    >
+                      <option value="">All tags</option>
+                      {data.tags.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          #{t.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                )}
                 <div className="min-w-0 flex-1 sm:w-40 sm:flex-none">
-                  <label htmlFor="note-tag" className="sr-only">
-                    Tag
+                  <label htmlFor="note-sort" className="sr-only">
+                    Sort by
                   </label>
                   <Select
-                    id="note-tag"
-                    value={query.tagId ?? ''}
-                    onChange={(e) => onQuery({ tagId: e.target.value || null })}
+                    id="note-sort"
+                    value={query.sort}
+                    onChange={(e) => onQuery({ sort: e.target.value as NoteSort })}
                   >
-                    <option value="">All tags</option>
-                    {data.tags.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        #{t.name}
-                      </option>
-                    ))}
+                    <option value="updated">Last edited</option>
+                    <option value="created">Newest first</option>
+                    <option value="title">Title A–Z</option>
                   </Select>
                 </div>
-              )}
-              <div className="min-w-0 flex-1 sm:w-40 sm:flex-none">
-                <label htmlFor="note-sort" className="sr-only">
-                  Sort by
-                </label>
-                <Select
-                  id="note-sort"
-                  value={query.sort}
-                  onChange={(e) => onQuery({ sort: e.target.value as NoteSort })}
-                >
-                  <option value="updated">Last edited</option>
-                  <option value="created">Newest first</option>
-                  <option value="title">Title A–Z</option>
-                </Select>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {notes.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-line-strong bg-surface">
