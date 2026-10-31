@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 const localDate = (offsetDays: number) => {
   const d = new Date();

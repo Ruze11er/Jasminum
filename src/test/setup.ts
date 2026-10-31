@@ -8,6 +8,7 @@ import { useImportQueue } from '@/features/library/importStore';
 import { useLockStore } from '@/stores/lockStore';
 import { useEventEditor } from '@/features/calendar/eventEditorStore';
 import { useTaskEditor } from '@/features/tasks/editorStore';
+import { WELCOME_SEEN_KEY } from '@/app/layout/WelcomeSplash';
 import { resetDatabase } from './db';
 
 // Most tests run in jsdom; a few (e.g. file storage) run in plain Node with no window.
@@ -15,6 +16,8 @@ const isBrowserLike = typeof window !== 'undefined';
 
 beforeEach(async () => {
   await resetDatabase();
+  // The welcome splash would cover every page; welcome.test.tsx turns it back on.
+  if (isBrowserLike) sessionStorage.setItem(WELCOME_SEEN_KEY, '1');
 });
 
 // Pages are lazy-loaded; the first cold load in a parallel run can take over a second.

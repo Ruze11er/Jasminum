@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 
 /** Every table (as stored) and the SHA-256 of every stored file, read straight from the browser. */
 async function deviceState(page: Page) {

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 
 const quote = (page: Page) =>
   page.getByRole('heading', { name: 'Quote of the day' }).locator('..').getByRole('blockquote');

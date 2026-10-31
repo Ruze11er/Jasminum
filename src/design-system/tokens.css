@@ -37,6 +37,15 @@
   --shadow-color: 176 42 91;
   /* Chart marks (single series). Validated with the dataviz checks against --surface. */
   --chart-1: #d13d72;
+  /* Welcome splash background (decoration only; its text uses --fg / --primary-soft-fg). */
+  --welcome-bg: #fff5f8;
+  --welcome-blob-1: rgb(251 168 196 / 0.75);
+  --welcome-blob-2: rgb(201 182 242 / 0.7);
+  --welcome-blob-3: rgb(255 203 164 / 0.7);
+  --welcome-blob-4: rgb(255 204 221 / 0.85);
+  --welcome-petal: #ffffff;
+  --welcome-petal-center: #ffe8a3;
+  --welcome-halo: rgb(244 127 166 / 0.45);
 }
 
 /* ---------- Semantic tokens: dark ----------
@@ -72,6 +81,14 @@
   --info-soft: #222f4a;
   --shadow-color: 0 0 0;
   --chart-1: #e85a8a;
+  --welcome-bg: #1e1519;
+  --welcome-blob-1: rgb(163 54 95 / 0.55);
+  --welcome-blob-2: rgb(92 70 150 / 0.5);
+  --welcome-blob-3: rgb(140 80 50 / 0.45);
+  --welcome-blob-4: rgb(122 47 80 / 0.6);
+  --welcome-petal: #ffccdd;
+  --welcome-petal-center: #ffe8a3;
+  --welcome-halo: rgb(244 143 177 / 0.35);
 }
 
 /* ---------- Tailwind theme ---------- */

@@ -1,0 +1,147 @@
+/* Welcome splash (WelcomeSplash.tsx). Colors are the --welcome-* tokens in tokens.css.
+   Only transform and opacity animate, so it stays smooth on phones. */
+
+.welcome {
+  background: var(--welcome-bg);
+  transition:
+    opacity 500ms ease,
+    transform 500ms ease;
+}
+.welcome[data-leaving] {
+  opacity: 0;
+  transform: scale(1.04);
+  pointer-events: none;
+}
+
+/* Soft color clouds: radial gradients instead of blur filters, which are slow on phones. */
+.welcome-blob {
+  position: absolute;
+  width: 75vmax;
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  will-change: transform;
+  animation: welcome-drift 7s ease-in-out infinite alternate;
+}
+.welcome-blob-1 {
+  top: -30vmax;
+  left: -25vmax;
+  background: radial-gradient(circle, var(--welcome-blob-1) 0%, transparent 68%);
+}
+.welcome-blob-2 {
+  top: -25vmax;
+  right: -30vmax;
+  background: radial-gradient(circle, var(--welcome-blob-2) 0%, transparent 68%);
+  animation-duration: 8s;
+  animation-delay: -3s;
+  animation-direction: alternate-reverse;
+}
+.welcome-blob-3 {
+  bottom: -32vmax;
+  left: -20vmax;
+  background: radial-gradient(circle, var(--welcome-blob-3) 0%, transparent 68%);
+  animation-duration: 9s;
+  animation-delay: -5s;
+}
+.welcome-blob-4 {
+  bottom: -28vmax;
+  right: -25vmax;
+  background: radial-gradient(circle, var(--welcome-blob-4) 0%, transparent 68%);
+  animation-duration: 6.5s;
+  animation-delay: -2s;
+  animation-direction: alternate-reverse;
+}
+
+/* Little jasmine flowers floating up. Negative delays spread them over the screen at start. */
+.welcome-petal {
+  position: absolute;
+  left: var(--x);
+  bottom: -40px;
+  width: var(--size);
+  height: var(--size);
+  opacity: 0.85;
+  filter: drop-shadow(0 2px 3px rgb(var(--shadow-color) / 0.12));
+  will-change: transform;
+  animation: welcome-float var(--duration) linear var(--offset) infinite;
+}
+
+.welcome-logo {
+  animation:
+    welcome-pop 700ms cubic-bezier(0.34, 1.56, 0.64, 1) both,
+    welcome-bob 3s ease-in-out 700ms infinite;
+}
+.welcome-halo {
+  background: var(--welcome-halo);
+  animation: welcome-pulse 1.8s ease-out 300ms infinite;
+}
+.welcome-rise {
+  animation: welcome-rise 600ms ease-out 200ms both;
+}
+.welcome-rise-late {
+  animation-delay: 380ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-petal,
+  .welcome-halo {
+    display: none;
+  }
+}
+
+@keyframes welcome-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(18vmax, 14vmax, 0) scale(1.25);
+  }
+}
+@keyframes welcome-float {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(var(--drift), -60vh, 0) rotate(calc(var(--spin) / 2));
+  }
+  100% {
+    transform: translate3d(0, calc(-100vh - 80px), 0) rotate(var(--spin));
+  }
+}
+@keyframes welcome-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.5) rotate(-12deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+@keyframes welcome-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+@keyframes welcome-pulse {
+  from {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+@keyframes welcome-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

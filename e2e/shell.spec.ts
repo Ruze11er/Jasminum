@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test('navigates between main sections', async ({ page, isMobile }) => {
   await page.goto('/');

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test('create, edit, complete and keep tasks across reloads', async ({ page }) => {
   await page.goto('/tasks');

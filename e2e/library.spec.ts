@@ -1,6 +1,6 @@
 import { mkdirSync, openSync, writeSync, closeSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 
 /** A tiny valid one-page PDF that says "Hello Jasminum". */
 function makePdf(): Buffer {

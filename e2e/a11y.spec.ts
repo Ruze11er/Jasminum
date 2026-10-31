@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 
 /*
  * Automated accessibility audit (axe-core, WCAG 2.2 A and AA) of every page and the main

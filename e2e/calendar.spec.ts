@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test('create a repeating event, page through months and keep it after reload', async ({ page }) => {
   await page.goto('/calendar');

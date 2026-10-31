@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 
 const editorText = (page: Page) => page.getByRole('textbox', { name: 'Note text' });
 

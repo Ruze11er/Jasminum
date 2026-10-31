@@ -11,6 +11,7 @@ import { UpdatePrompt } from './UpdatePrompt';
 import { DataStatusScreen } from './DataStatusScreen';
 import { LockScreen } from './AppLock';
 import { useAppLock } from './useAppLock';
+import { WelcomeSplash } from './WelcomeSplash';
 import { Toaster } from '@/design-system';
 import { AppleInstallBanner } from '@/features/install/AppleInstallBanner';
 
@@ -116,6 +117,7 @@ export function AppShell() {
       </Toaster>
       <DataStatusScreen />
       {lock.locked && <LockScreen record={lock.record} />}
+      <WelcomeSplash />
       <ScrollRestoration />
     </div>
   );

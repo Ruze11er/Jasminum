@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 /** A one-page PDF, to exercise pdf.js (it runs in a worker) under the policy. */
 function makePdf(): Buffer {
