@@ -102,6 +102,8 @@ test('the deploy files are served with the build', async ({ page }) => {
   expect(headers).toContain("frame-ancestors 'none'");
   expect(headers).toContain('X-Content-Type-Options: nosniff');
   expect(headers).toContain('Strict-Transport-Security: max-age=31536000');
+  // No catch-all _redirects: Cloudflare rejects it (app routes come from wrangler.jsonc).
+  // (The preview server answers unknown paths with index.html, so check the content.)
   const redirects = await (await page.request.get('/_redirects')).text();
-  expect(redirects).toMatch(/\/\*\s+\/index\.html\s+200/);
+  expect(redirects).not.toMatch(/\/\*\s+\/index\.html\s+200/);
 });

@@ -1,0 +1,10 @@
+# Netlify only (Cloudflare reads wrangler.jsonc). Security headers come from public/_headers.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Single-page app: app routes such as /notes get index.html. Real files are served first.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

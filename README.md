@@ -28,15 +28,18 @@ The service worker only runs in the production build, so test offline behavior w
 
 Jasminum is a set of static files: `npm run build` puts everything in `dist/`. There is no server code, database or API to set up.
 
-**Recommended: Cloudflare Pages or Netlify.** Both read the two deploy files in `public/` (copied into `dist/`):
+**Recommended: Cloudflare or Netlify.** The deploy files:
 
-- `_headers` sets the security headers (Content-Security-Policy, HTTPS only (HSTS), no framing, no referrer, locked-down permissions) and the caching rules. The policy is also copied into `index.html` at build time, so it applies even where headers can't be set.
-- `_redirects` sends every app route (like `/notes/…`) to `index.html`.
+- `public/_headers` (copied into `dist/`), read by both hosts, sets the security headers (Content-Security-Policy, HTTPS only (HSTS), no framing, no referrer, locked-down permissions) and the caching rules. The policy is also copied into `index.html` at build time, so it applies even where headers can't be set.
+- `wrangler.jsonc` (Cloudflare) uploads `dist/` and sends every app route (like `/notes/…`) to `index.html`.
+- `netlify.toml` (Netlify) does the same for Netlify.
 
-Setup on either host:
+There's deliberately no `_redirects` catch-all (`/* /index.html 200`): Cloudflare rejects it as an infinite loop and fails the deploy.
 
-1. Create a project from this GitHub repository.
-2. Build command: `npm run build`. Output folder: `dist`. Node version: 24 (read from `.node-version`).
+Setup:
+
+1. Create a project from this GitHub repository. On Cloudflare: **Workers & Pages** → **Create application** → import the repository.
+2. Build command: `npm run build`. Output folder: `dist`. Node version: 24 (read from `.node-version`). On Cloudflare the deploy command is `npx wrangler deploy` (the default); it reads `wrangler.jsonc`.
 3. Add your custom domain in the host's domain settings. HTTPS is set up automatically, and the app needs it: service workers and installing only work over HTTPS.
 4. Pick one address and keep it. Browsers keep each user's data per address, so `www.example.com` and `example.com` count as two separate apps, and moving to a new domain later leaves everyone's data behind (they'd need a backup to move it). Redirect every other form of the address to the one you chose, from the first day.
 
