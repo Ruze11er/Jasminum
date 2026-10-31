@@ -5,6 +5,8 @@ import { cleanup, configure } from '@testing-library/react';
 import { useUiStore } from '@/stores/uiStore';
 import { useToasts } from '@/design-system/components/toastStore';
 import { useImportQueue } from '@/features/library/importStore';
+import { useEventEditor } from '@/features/calendar/eventEditorStore';
+import { useTaskEditor } from '@/features/tasks/editorStore';
 import { resetDatabase } from './db';
 
 // Most tests run in jsdom; a few (e.g. file storage) run in plain Node with no window.
@@ -26,6 +28,9 @@ afterEach(() => {
     libraryLayout: 'grid',
   });
   useImportQueue.setState({ items: [] });
+  // An editor left open would cover the next test's page with a dialog.
+  useTaskEditor.setState({ open: false, taskId: null, defaults: {} });
+  useEventEditor.setState({ open: false, eventId: null, occurrenceDate: null, defaults: {} });
   useToasts.setState({ toasts: [] });
   if (!isBrowserLike) return;
   cleanup();

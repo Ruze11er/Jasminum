@@ -1,8 +1,7 @@
 import { Link } from 'react-router';
 import { CalendarHeart, ChevronRight, ListChecks } from 'lucide-react';
 import { Card, CardHeader, EmptyState, ProgressRing } from '@/design-system';
-import { clock } from '@/lib/clock';
-import { localDateOf } from '@/lib/dates';
+import { useToday } from '@/lib/useToday';
 import { TaskItem } from '@/features/tasks/components/TaskItem';
 import { useTaskEditor } from '@/features/tasks/editorStore';
 import { buildView, todayProgress } from '@/features/tasks/selectors';
@@ -14,7 +13,7 @@ const MAX_SHOWN = 5;
 export function TodayCard() {
   const data = useTasksData();
   const openEdit = useTaskEditor((s) => s.openEdit);
-  const today = localDateOf(clock.now());
+  const today = useToday();
   if (!data) return <Card className="min-h-48" aria-busy="true" />;
 
   const { done, total } = todayProgress(data.tasks, today);

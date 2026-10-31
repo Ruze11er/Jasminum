@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { clock } from '@/lib/clock';
+import { isLocalDate } from '@/lib/dates';
 import { z, type Schema } from '@/lib/validation';
 import { db } from '../db';
 
@@ -27,6 +28,26 @@ export const settingDefinitions = {
   weekStartsOn: {
     schema: z.union([z.literal(0), z.literal(1), z.literal(6)]),
     defaultValue: 1 as WeekStart,
+  },
+  /** Which kinds of daily quote to show (ids from features/quotes). Empty means all. */
+  quoteCategories: {
+    schema: z.array(z.string().check(z.maxLength(20))).check(z.maxLength(20)),
+    defaultValue: [] as string[],
+  },
+  /** Today's quote, so it stays the same all day: { date: "YYYY-MM-DD", quoteId }. */
+  dailyQuote: {
+    schema: z.nullable(
+      z.object({
+        date: z.string().check(z.refine(isLocalDate)),
+        quoteId: z.string().check(z.maxLength(60)),
+      }),
+    ),
+    defaultValue: null as { date: string; quoteId: string } | null,
+  },
+  /** Recently shown quote ids, newest first, so quotes don't repeat too soon. */
+  recentQuoteIds: {
+    schema: z.array(z.string().check(z.maxLength(60))).check(z.maxLength(200)),
+    defaultValue: [] as string[],
   },
 } satisfies Record<string, { schema: Schema; defaultValue: unknown }>;
 
