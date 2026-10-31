@@ -51,6 +51,31 @@ export const settingDefinitions = {
     }),
     defaultValue: { disabledRules: [] as string[] },
   },
+  /** First-run welcome on Home: when the user finished or hid it (ms), or null. */
+  onboarding: {
+    schema: z.object({ completedAt: z.nullable(z.number()) }),
+    defaultValue: { completedAt: null } as { completedAt: number | null },
+  },
+  /**
+   * Optional PIN lock (a privacy screen, not encryption). The PIN is stored only as a
+   * salted PBKDF2 hash. null = off.
+   */
+  appLock: {
+    schema: z.nullable(
+      z.object({
+        salt: z.string().check(z.maxLength(64)),
+        hash: z.string().check(z.maxLength(128)),
+        iterations: z.int().check(z.minimum(10_000), z.maximum(5_000_000)),
+        lockAfterMinutes: z.union([z.literal(0), z.literal(1), z.literal(5), z.literal(15)]),
+      }),
+    ),
+    defaultValue: null as {
+      salt: string;
+      hash: string;
+      iterations: number;
+      lockAfterMinutes: 0 | 1 | 5 | 15;
+    } | null,
+  },
   /** Recently shown quote ids, newest first, so quotes don't repeat too soon. */
   recentQuoteIds: {
     schema: z.array(z.string().check(z.maxLength(60))).check(z.maxLength(200)),

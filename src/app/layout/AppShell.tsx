@@ -9,7 +9,10 @@ import { BottomNav, MobileHeader, QuickAddFab } from './MobileNav';
 import { QuickAddSheet } from './QuickAddSheet';
 import { UpdatePrompt } from './UpdatePrompt';
 import { DataStatusScreen } from './DataStatusScreen';
+import { LockScreen } from './AppLock';
+import { useAppLock } from './useAppLock';
 import { Toaster } from '@/design-system';
+import { AppleInstallBanner } from '@/features/install/AppleInstallBanner';
 
 // The task and event forms are only downloaded the first time they're opened.
 const TaskEditorSheet = lazy(() => import('@/features/tasks/editor/TaskEditorSheet'));
@@ -63,6 +66,7 @@ export function AppShell() {
   if (eventEditorOpen && !eventEditorLoaded) setEventEditorLoaded(true);
   useBackgroundServices();
   useSearchShortcut();
+  const lock = useAppLock();
   const paletteOpen = useUiStore((s) => s.paletteOpen);
   const [paletteLoaded, setPaletteLoaded] = useState(false);
   if (paletteOpen && !paletteLoaded) setPaletteLoaded(true);
@@ -83,6 +87,7 @@ export function AppShell() {
           tabIndex={-1}
           className="mx-auto w-full max-w-5xl px-4 pt-5 pb-[calc(7rem+env(safe-area-inset-bottom))] outline-none md:px-8 md:pt-10 md:pb-12"
         >
+          <AppleInstallBanner />
           <Suspense fallback={<PageSkeleton />}>
             <Outlet />
           </Suspense>
@@ -110,6 +115,7 @@ export function AppShell() {
         <UpdatePrompt />
       </Toaster>
       <DataStatusScreen />
+      {lock.locked && <LockScreen record={lock.record} />}
       <ScrollRestoration />
     </div>
   );

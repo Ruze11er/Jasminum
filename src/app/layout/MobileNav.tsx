@@ -99,7 +99,7 @@ export function QuickAddFab() {
       type="button"
       onClick={() => open(true)}
       aria-label="Create new"
-      className="fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 flex size-14 items-center justify-center rounded-full bg-primary text-on-primary shadow-soft-lg transition-transform active:scale-95 md:hidden"
+      className="fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 flex size-14 items-center justify-center rounded-full bg-primary text-on-primary shadow-soft-lg transition-transform active:scale-95 md:hidden"
     >
       <Plus className="size-7" strokeWidth={2.4} />
     </button>

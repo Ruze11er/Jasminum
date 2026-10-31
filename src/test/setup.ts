@@ -5,6 +5,7 @@ import { cleanup, configure } from '@testing-library/react';
 import { useUiStore } from '@/stores/uiStore';
 import { useToasts } from '@/design-system/components/toastStore';
 import { useImportQueue } from '@/features/library/importStore';
+import { useLockStore } from '@/stores/lockStore';
 import { useEventEditor } from '@/features/calendar/eventEditorStore';
 import { useTaskEditor } from '@/features/tasks/editorStore';
 import { resetDatabase } from './db';
@@ -28,6 +29,7 @@ afterEach(() => {
     libraryLayout: 'grid',
   });
   useImportQueue.setState({ items: [] });
+  useLockStore.setState({ locked: false });
   // An editor left open would cover the next test's page with a dialog.
   useTaskEditor.setState({ open: false, taskId: null, defaults: {} });
   useEventEditor.setState({ open: false, eventId: null, occurrenceDate: null, defaults: {} });

@@ -8,6 +8,7 @@ import { QuoteCard } from './QuoteCard';
 import { ScheduleCard } from './ScheduleCard';
 import { StatsRow } from './StatsRow';
 import { TodayCard } from './TodayCard';
+import { WelcomeCard } from './WelcomeCard';
 
 function greeting(hour: number) {
   if (hour < 5) return 'Hello, night owl';
@@ -36,6 +37,8 @@ export default function HomePage() {
           <Sparkle className="size-5 text-pink-300" />
         </h1>
       </header>
+
+      <WelcomeCard />
 
       <QuoteCard />
 

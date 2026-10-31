@@ -176,6 +176,19 @@
   }
 }
 
+/* iPhone in landscape: keep content clear of the notch / Dynamic Island. */
+#root {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Installed app: no pull-to-refresh or rubber-band bounce revealing a blank page. */
+@media (display-mode: standalone) {
+  body {
+    overscroll-behavior-y: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -9,8 +9,10 @@ import '@fontsource/quicksand/700.css';
 import './design-system/tokens.css';
 import { createAppRouter } from './app/router';
 import { startDataServices } from './data/bootstrap';
+import { listenForInstallPrompt } from './platform/install';
 
 const router = createAppRouter();
+listenForInstallPrompt();
 void startDataServices();
 
 createRoot(document.getElementById('root')!).render(

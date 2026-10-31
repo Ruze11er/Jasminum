@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
 import {
   CalendarCheck,
@@ -75,6 +75,11 @@ export default function TasksPage() {
   const openEdit = useTaskEditor((s) => s.openEdit);
   // ?view=overdue (e.g. from an insight) picks the starting view.
   const [params] = useSearchParams();
+  // The home-screen shortcut "New task" opens /tasks?new=1.
+  const wantsNew = params.get('new') === '1';
+  useEffect(() => {
+    if (wantsNew) openNew({ dueDate: localDateOf(clock.now()) });
+  }, [wantsNew, openNew]);
   const [view, setView] = useState<TaskView>(() => {
     const v = params.get('view');
     return v === 'today' || v === 'upcoming' || v === 'overdue' || v === 'all' || v === 'completed'

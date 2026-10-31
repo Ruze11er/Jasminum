@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import { Upload } from 'lucide-react';
-import { PageHeader } from '@/design-system';
+import { PageHeader, toast } from '@/design-system';
 import { FilePickerButton, primaryButtonClasses } from './components/FilePickerButton';
 import { LibraryBrowser } from './components/LibraryBrowser';
 import { DocumentDetail } from './detail/DocumentDetail';
 import { useImportQueue } from './importStore';
+import { takeSharedFiles } from './sharedFiles';
 import {
   defaultLibraryQuery,
   folderIdOfView,
@@ -26,6 +27,30 @@ export default function LibraryPage() {
   const [params, setParams] = useSearchParams();
   const data = useLibraryData();
   const enqueue = useImportQueue((s) => s.enqueue);
+
+  // Files shared into the app (Android share target) arrive as /library?shared=N.
+  const shared = params.get('shared');
+  useEffect(() => {
+    if (!shared) return;
+    let cancelled = false;
+    void (async () => {
+      if (shared === 'error') {
+        toast({
+          tone: 'error',
+          message: "The shared files couldn't be received. Try adding them here.",
+        });
+      } else {
+        const files = await takeSharedFiles();
+        if (!cancelled && files.length) useImportQueue.getState().enqueue(files);
+      }
+      if (!cancelled) setParams({}, { replace: true });
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // Runs when a share arrives; setParams is stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shared]);
   const [dragging, setDragging] = useState(false);
 
   const sort = params.get('sort');

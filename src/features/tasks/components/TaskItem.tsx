@@ -1,12 +1,21 @@
 import { useState, type ReactNode } from 'react';
-import { CalendarDays, ChevronDown, ListChecks, Repeat, type LucideIcon } from 'lucide-react';
+import {
+  CalendarDays,
+  Check,
+  ChevronDown,
+  ListChecks,
+  Repeat,
+  Trash2,
+  type LucideIcon,
+} from 'lucide-react';
 import { Checkbox, Chip, type ChipColor } from '@/design-system';
 import { tasksRepo } from '@/data/repos/tasks';
 import type { Category, ChecklistItem, Tag, Task } from '@/data/types';
 import { cn } from '@/lib/cn';
 import { dayLabel, timeLabel } from '@/lib/dates';
 import { useOptimisticFlag } from '@/lib/useOptimisticFlag';
-import { toggleTaskDone } from '../taskActions';
+import { useSwipe } from '@/lib/useSwipe';
+import { deleteTask, toggleTaskDone } from '../taskActions';
 import { PriorityBadge } from './PriorityBadge';
 
 function Meta({
@@ -67,10 +76,50 @@ export function TaskItem({
   const doneCount = checklist.filter((i) => i.done).length;
   const tags = task.tagIds.map((id) => tagById.get(id)).filter((t): t is Tag => !!t);
   const checklistId = `checklist-${task.id}`;
+  // Touch: swipe right to complete (or reopen), left to delete. The checkbox and the
+  // form's Delete button do the same for everyone else.
+  const swipe = useSwipe({
+    onSwipeRight: () => void toggleDone(() => toggleTaskDone(task)),
+    onSwipeLeft: () => void deleteTask(task),
+  });
+  const swiping = swipe.offset !== 0;
 
   return (
-    <li className="group/task">
-      <div className="flex items-start gap-3 px-4 py-3 md:px-5">
+    <li className="group/task relative overflow-hidden">
+      {swiping && (
+        <div
+          aria-hidden="true"
+          className={cn(
+            'absolute inset-0 flex items-center px-5 text-sm font-bold',
+            swipe.offset > 0
+              ? 'justify-start bg-success-soft text-success'
+              : 'justify-end bg-danger-soft text-danger',
+          )}
+        >
+          <span
+            className="flex items-center gap-1.5"
+            style={{ opacity: 0.4 + swipe.progress * 0.6 }}
+          >
+            {swipe.offset > 0 ? (
+              <>
+                <Check className="size-5" /> {done ? 'Not done' : 'Done'}
+              </>
+            ) : (
+              <>
+                Delete <Trash2 className="size-5" />
+              </>
+            )}
+          </span>
+        </div>
+      )}
+      <div
+        {...swipe.handlers}
+        style={swiping ? { transform: `translateX(${swipe.offset}px)` } : undefined}
+        className={cn(
+          'relative flex touch-pan-y items-start gap-3 bg-surface px-4 py-3 md:px-5',
+          !swiping && 'transition-transform duration-200',
+        )}
+      >
         <div className="pt-0.5">
           <Checkbox
             checked={done}

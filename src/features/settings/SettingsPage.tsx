@@ -9,6 +9,8 @@ import { DataCard } from './data/DataCard';
 import { CalendarCard } from './CalendarCard';
 import { QuotesCard } from './QuotesCard';
 import { InsightsSettingsCard } from './InsightsSettingsCard';
+import { InstallCard } from './InstallCard';
+import { AppLockCard } from './AppLockCard';
 
 export default function SettingsPage() {
   const theme = useUiStore((s) => s.theme);
@@ -50,7 +52,11 @@ export default function SettingsPage() {
 
         <OrganizeCard />
 
+        <InstallCard />
+
         <StorageCard />
+
+        <AppLockCard />
 
         <DataCard />
 

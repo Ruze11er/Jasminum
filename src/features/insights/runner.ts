@@ -5,6 +5,7 @@ import { insightsRepo } from '@/data/repos/insights';
 import { getSetting } from '@/data/repos/settings';
 import { clock, DAY_MS } from '@/lib/clock';
 import { localDateOf } from '@/lib/dates';
+import { setAppBadge } from '@/platform/badge';
 import { getStorageEstimate } from '@/platform/storage';
 import { evaluateRules } from './engine/rules';
 import type { InsightCandidate, InsightContext } from './engine/types';
@@ -54,6 +55,10 @@ export async function buildContext(now = clock.now()): Promise<InsightContext> {
   };
 }
 
+export const overdueCount = (ctx: InsightContext) =>
+  ctx.tasks.filter((t) => t.status === 'todo' && t.dueDate !== null && t.dueDate < ctx.today)
+    .length;
+
 export const toPayload = (c: InsightCandidate) => ({
   tone: c.tone,
   title: c.title,
@@ -65,6 +70,8 @@ export const toPayload = (c: InsightCandidate) => ({
 export async function runInsightsNow(now = clock.now()): Promise<InsightCandidate[]> {
   const [ctx, prefs] = await Promise.all([buildContext(now), getSetting('insightPrefs')]);
   const candidates = evaluateRules(ctx, prefs.disabledRules);
+  // The app icon shows how many tasks are overdue (where the browser supports badges).
+  void setAppBadge(overdueCount(ctx));
   await insightsRepo.sync(
     candidates.map((c) => ({
       ruleId: c.ruleId,

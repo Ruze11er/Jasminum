@@ -33,16 +33,62 @@ export default defineConfig({
         background_color: '#FFFBFC',
         theme_color: '#FFF5F8',
         categories: ['productivity', 'education'],
+        // Long-press the home-screen icon (Android, desktop) for these.
+        shortcuts: [
+          { name: 'New task', short_name: 'Task', url: '/tasks?new=1' },
+          { name: 'New note', short_name: 'Note', url: '/notes/new' },
+          { name: 'Calendar', short_name: 'Calendar', url: '/calendar' },
+          { name: 'Library', short_name: 'Library', url: '/library' },
+        ],
+        // Android: "Share → Jasminum" sends files into the library. The service worker
+        // (public/share-target-sw.js) receives them; see features/library/sharedFiles.ts.
+        share_target: {
+          action: '/share-target',
+          method: 'POST',
+          enctype: 'multipart/form-data',
+          params: {
+            title: 'title',
+            text: 'text',
+            url: 'url',
+            files: [
+              {
+                name: 'files',
+                accept: [
+                  'application/pdf',
+                  'image/*',
+                  'text/*',
+                  'application/epub+zip',
+                  'application/msword',
+                  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                  'application/vnd.ms-powerpoint',
+                  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                  'application/vnd.ms-excel',
+                  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                  '.pdf',
+                  '.epub',
+                  '.docx',
+                  '.pptx',
+                  '.xlsx',
+                ],
+              },
+            ],
+          },
+        },
       },
       workbox: {
         // The web manifest is added by the plugin itself; listing it here too breaks the install.
         // .mjs: the PDF engine's worker. Without it, PDFs couldn't be previewed offline.
         globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,woff2,json}'],
+        // iOS keeps its own copy of launch screens; precaching 40+ images would be waste.
+        globIgnores: ['**/apple-splash-*'],
         navigateFallback: 'index.html',
         cleanupOutdatedCaches: true,
         // Bundle Workbox into sw.js: one less request, and setup errors fail loudly
         // instead of being silently swallowed by the async loader.
         inlineWorkboxRuntime: true,
+        // Receives files shared into the app (Android share target). Loaded first, so
+        // its POST handler runs before Workbox's routes (which only handle GET).
+        importScripts: ['share-target-sw.js'],
       },
       devOptions: { enabled: false },
     }),
