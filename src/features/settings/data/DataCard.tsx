@@ -44,7 +44,7 @@ function Row({ title, text, children }: { title: string; text: ReactNode; childr
 
 /**
  * Settings → Backup & data: back up, restore, undo a restore, moving devices, exports,
- * integrity, removing the examples, Trash.
+ * integrity, removing the examples, deleting everything, Trash.
  */
 export function DataCard() {
   const lastBackupAt = useSetting('lastBackupAt');
@@ -58,6 +58,7 @@ export function DataCard() {
   };
   const [snapshot, setSnapshot] = useState<{ key: string; at: number } | null>(null);
   const [confirmUndo, setConfirmUndo] = useState(false);
+  const [confirmErase, setConfirmErase] = useState(false);
   const [refresh, setRefresh] = useState(0);
 
   useEffect(() => {
@@ -89,6 +90,21 @@ export function DataCard() {
     await restoreSnapshot(snapshot.key);
     toast({ message: 'Your data is back to how it was before the restore' });
     setRefresh((n) => n + 1);
+  };
+  const eraseEverything = async () => {
+    const { eraseAllData, restartApp } = await import('@/data/eraseAll');
+    try {
+      await eraseAllData();
+    } catch (err) {
+      console.error('Delete everything failed', err);
+      toast({
+        tone: 'error',
+        message:
+          "Some data couldn't be erased. Close other Jasminum tabs and try again, or clear this site's data in your browser settings.",
+      });
+      return;
+    }
+    restartApp();
   };
 
   return (
@@ -171,6 +187,20 @@ export function DataCard() {
           </Row>
         )}
 
+        <Row
+          title="Delete everything"
+          text="Erase all your tasks, events, notes, files and settings from this device, including the Trash. Make a backup first if you might want them back."
+        >
+          <Button
+            variant="danger"
+            size="sm"
+            icon={<Trash2 />}
+            onClick={() => setConfirmErase(true)}
+          >
+            Delete everything
+          </Button>
+        </Row>
+
         <div className="pt-2">
           <Link
             to="/trash"
@@ -208,6 +238,19 @@ export function DataCard() {
         }
         confirmLabel="Undo restore"
         onConfirm={() => void undoRestore()}
+      />
+
+      <ConfirmDialog
+        open={confirmErase}
+        onOpenChange={setConfirmErase}
+        title="Delete everything on this device?"
+        description={`All your tasks, events, notes, files and settings are erased for good, including the Trash. ${
+          lastBackupAt
+            ? `Your last backup is from ${formatRelative(lastBackupAt, clock.now())}.`
+            : "You haven't made a backup."
+        } This can't be undone.`}
+        confirmLabel="Delete everything"
+        onConfirm={eraseEverything}
       />
     </Card>
   );

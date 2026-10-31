@@ -1,4 +1,4 @@
-import { clock } from '@/lib/clock';
+import { clock, DAY_MS } from '@/lib/clock';
 import { db } from '../db';
 import { getFileStore } from '../files';
 import { searchIndex } from '../search/searchIndex';
@@ -8,10 +8,15 @@ import { TABLE_NAMES, tableOf, type BackupTable } from './format';
  * Small safety copies of all metadata (not file bytes) taken before a restore, so a bad
  * restore can be undone. Stored as JSON in the file store under "snapshot-<time>.json";
  * the newest three are kept. File bytes don't need copying: a restore never deletes any.
+ *
+ * A snapshot also holds items the user may later erase for good, so snapshots don't live
+ * long: they expire after SNAPSHOT_MAX_AGE_DAYS, and emptying the Trash (or deleting
+ * something forever, or erasing everything) removes them straight away.
  */
 
 export const SNAPSHOT_PREFIX = 'snapshot-';
 const KEEP = 3;
+export const SNAPSHOT_MAX_AGE_DAYS = 7;
 
 export interface SnapshotInfo {
   key: string;
@@ -47,6 +52,22 @@ export async function listSnapshots(): Promise<SnapshotInfo[]> {
     .map((key) => ({ key, at: Number(key.slice(SNAPSHOT_PREFIX.length).replace('.json', '')) }))
     .filter((s) => Number.isFinite(s.at))
     .sort((a, b) => b.at - a.at);
+}
+
+/** Erases snapshots older than SNAPSHOT_MAX_AGE_DAYS. Runs at start-up. */
+export async function pruneSnapshots(now = clock.now()): Promise<number> {
+  const store = await getFileStore();
+  const expired = (await listSnapshots()).filter(
+    (s) => now - s.at >= SNAPSHOT_MAX_AGE_DAYS * DAY_MS,
+  );
+  for (const s of expired) await store.delete(s.key);
+  return expired.length;
+}
+
+/** Erases every snapshot (after something is deleted for good). */
+export async function deleteAllSnapshots(): Promise<void> {
+  const store = await getFileStore();
+  for (const s of await listSnapshots()) await store.delete(s.key);
 }
 
 /** Puts every table back exactly as it was in the snapshot. */

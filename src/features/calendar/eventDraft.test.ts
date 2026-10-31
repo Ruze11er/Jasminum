@@ -1,9 +1,54 @@
 import { describe, expect, it } from 'vitest';
 import { eventsRepo } from '@/data/repos/events';
 import { localDateTimeToIso } from '@/lib/dates';
-import { addMinutes, draftFromEvent, draftToInput, moveStart, newDraft } from './eventDraft';
+import {
+  addMinutes,
+  draftFromEvent,
+  draftToInput,
+  moveStart,
+  newDraft,
+  setAllDay,
+} from './eventDraft';
 
 const at = (date: string, time: string) => new Date(`${date}T${time}:00`).getTime();
+
+describe('switching all day on and off', () => {
+  it('keeps a late-evening new event on one day when it becomes all-day', () => {
+    // 22:30: the default is 23:00 to midnight, which ends on the next date.
+    const d = newDraft({}, at('2026-10-31', '22:30'));
+    expect(d).toMatchObject({ startDate: '2026-10-31', endDate: '2026-11-01', endTime: '00:00' });
+    expect(setAllDay(d, true)).toMatchObject({
+      allDay: true,
+      startDate: '2026-10-31',
+      endDate: '2026-10-31',
+    });
+  });
+
+  it('keeps real multi-day spans', () => {
+    const d = {
+      ...newDraft({}, at('2026-11-02', '08:00')),
+      endDate: '2026-11-04',
+      endTime: '18:00',
+    };
+    expect(setAllDay(d, true)).toMatchObject({ startDate: '2026-11-02', endDate: '2026-11-04' });
+  });
+
+  it('gives an hour when switching back leaves the end before the start', () => {
+    const d = setAllDay(newDraft({}, at('2026-10-31', '22:30')), true);
+    expect(setAllDay(d, false)).toMatchObject({
+      allDay: false,
+      startDate: '2026-10-31',
+      startTime: '23:00',
+      endDate: '2026-11-01',
+      endTime: '00:00',
+    });
+  });
+
+  it('drops a reminder the other kind of event does not offer', () => {
+    const d = { ...newDraft({}, at('2026-11-02', '08:00')), reminder: '15' };
+    expect(setAllDay(d, true).reminder).toBe('');
+  });
+});
 
 describe('event form drafts', () => {
   it('starts a new event today at the next full hour, for one hour', () => {

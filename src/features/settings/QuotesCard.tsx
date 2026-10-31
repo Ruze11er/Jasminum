@@ -1,13 +1,22 @@
+import { useState } from 'react';
 import { Quote } from 'lucide-react';
 import { Card, CardHeader, toast } from '@/design-system';
 import { setSetting, useSetting } from '@/data/repos/settings';
 import { QUOTE_CATEGORIES, QUOTES } from '@/features/quotes/quotes';
 
+const sameSet = (a: string[], b: string[]) =>
+  a.length === b.length && a.every((x) => b.includes(x));
+
 /** Settings → Daily quote: which kinds of quotes appear on Home. */
 export function QuotesCard() {
   const stored = useSetting('quoteCategories');
   // Nothing stored means every category.
-  const enabled = stored.length ? stored : QUOTE_CATEGORIES.map((c) => c.id);
+  const saved = stored.length ? stored : QUOTE_CATEGORIES.map((c) => c.id);
+  // The latest choice is shown, and built on, until the save lands, so quick taps in a
+  // row all count (each one would otherwise start from the last saved list).
+  const [pending, setPending] = useState<string[] | null>(null);
+  if (pending && sameSet(pending, saved)) setPending(null);
+  const enabled = pending ?? saved;
 
   const toggle = (id: string) => {
     const next = enabled.includes(id) ? enabled.filter((c) => c !== id) : [...enabled, id];
@@ -15,7 +24,10 @@ export function QuotesCard() {
       toast({ tone: 'info', message: 'Keep at least one kind of quote.' });
       return;
     }
-    void setSetting('quoteCategories', next.length === QUOTE_CATEGORIES.length ? [] : next);
+    setPending(next);
+    setSetting('quoteCategories', next.length === QUOTE_CATEGORIES.length ? [] : next).catch(() =>
+      setPending(null),
+    );
   };
 
   return (

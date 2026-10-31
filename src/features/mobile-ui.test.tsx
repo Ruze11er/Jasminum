@@ -221,35 +221,81 @@ describe('swipe gestures', () => {
 });
 
 describe('sharing files into the app', () => {
-  it('imports files the service worker received', async () => {
-    const stored = new Map<string, Response>();
+  // A stand-in for the Cache API (jsdom has none), holding one shared PDF.
+  function fakeShareCache() {
+    const stored = new Map<string, () => Response>();
     const cache = {
       keys: async () => [...stored.keys()].map((k) => new Request(`http://localhost${k}`)),
-      match: async (r: Request) => stored.get(new URL(r.url).pathname),
+      match: async (r: Request) => stored.get(new URL(r.url).pathname)?.(),
       delete: async (r: Request) => stored.delete(new URL(r.url).pathname),
     };
     const open = vi.fn(async () => cache);
-    Object.assign(globalThis, { caches: { open } });
+    const remove = vi.fn(async () => {
+      stored.clear();
+      return true;
+    });
+    Object.assign(globalThis, {
+      caches: { open, has: async () => stored.size > 0, delete: remove },
+    });
     stored.set(
       '/__shared__/1-0',
-      new Response('%PDF-1.7', {
-        headers: {
-          'content-type': 'application/pdf',
-          'x-file-name': encodeURIComponent('Lecture notes.pdf'),
-        },
-      }),
+      () =>
+        new Response('%PDF-1.7', {
+          headers: {
+            'content-type': 'application/pdf',
+            'x-file-name': encodeURIComponent('Lecture notes.pdf'),
+          },
+        }),
     );
     const enqueue = vi.fn();
     useImportQueue.setState({ enqueue });
+    return { stored, open, remove, enqueue };
+  }
+  afterEach(() => {
+    delete (globalThis as Record<string, unknown>).caches;
+  });
+
+  it('asks first, then imports the files the service worker received', async () => {
+    const user = userEvent.setup();
+    const { stored, open, enqueue } = fakeShareCache();
 
     const router = renderApp('/library?shared=1');
+    const dialog = await screen.findByRole('dialog', { name: 'Add a shared file?' });
+    expect(within(dialog).getByText('Lecture notes.pdf')).toBeInTheDocument();
+    expect(enqueue).not.toHaveBeenCalled();
+    await waitFor(() => expect(router.state.location.search).toBe(''));
+
+    await user.click(within(dialog).getByRole('button', { name: 'Add to Library' }));
     await waitFor(() => expect(enqueue).toHaveBeenCalled());
     expect(open).toHaveBeenCalledWith(SHARE_CACHE);
     const [files] = enqueue.mock.calls[0]! as [File[]];
     expect(files.map((f) => [f.name, f.type])).toEqual([['Lecture notes.pdf', 'application/pdf']]);
     expect(stored.size).toBe(0); // the cache is emptied
-    await waitFor(() => expect(router.state.location.search).toBe(''));
-    delete (globalThis as Record<string, unknown>).caches;
+  });
+
+  it('throws the files away when the user did not share them', async () => {
+    const user = userEvent.setup();
+    const { stored, remove, enqueue } = fakeShareCache();
+
+    renderApp('/library?shared=1');
+    const dialog = await screen.findByRole('dialog', { name: 'Add a shared file?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Discard' }));
+    await waitFor(() => expect(remove).toHaveBeenCalledWith(SHARE_CACHE));
+    expect(stored.size).toBe(0);
+    expect(enqueue).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it('offers waiting files on any visit, and closing the question keeps them waiting', async () => {
+    const user = userEvent.setup();
+    const { stored, enqueue } = fakeShareCache();
+
+    renderApp('/library');
+    await screen.findByRole('dialog', { name: 'Add a shared file?' });
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(enqueue).not.toHaveBeenCalled();
+    expect(stored.size).toBe(1);
   });
 });
 

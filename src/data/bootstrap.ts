@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { logActivity } from './activity';
 import { db } from './db';
 
-type DataStatus = 'loading' | 'ready' | 'unavailable' | 'outdated';
+type DataStatus = 'loading' | 'ready' | 'unavailable' | 'outdated' | 'erased';
 
 /** Database health, read by the app shell to show a blocking message if storage fails. */
 export const useDataStatus = create<{ status: DataStatus; error?: string }>(() => ({
@@ -23,10 +23,11 @@ export async function startDataServices(): Promise<void> {
   if (started) return;
   started = true;
 
-  // Another tab installed a newer version of the app: close so its upgrade can proceed.
-  db.on('versionchange', () => {
+  // Another tab installed a newer version of the app (close so its upgrade can proceed),
+  // or erased everything ("Delete everything" deletes the database: no new version).
+  db.on('versionchange', (event: IDBVersionChangeEvent) => {
     db.close();
-    useDataStatus.setState({ status: 'outdated' });
+    useDataStatus.setState({ status: event.newVersion === null ? 'erased' : 'outdated' });
   });
 
   try {
@@ -51,6 +52,8 @@ export async function startDataServices(): Promise<void> {
       try {
         const { purgeExpiredTrash } = await import('./trash');
         await purgeExpiredTrash();
+        const { pruneSnapshots } = await import('./backup/snapshots');
+        await pruneSnapshots();
         const { searchIndex } = await import('./search/searchIndex');
         await searchIndex.rebuild();
       } catch (err) {

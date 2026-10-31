@@ -29,6 +29,10 @@ vi.mock('@/data/backup/restore', () => ({
   discardStaged: backup.discardStaged,
 }));
 
+// Really erasing would delete the test database mid-test; that's covered in backup.test.ts.
+const erase = vi.hoisted(() => ({ eraseAllData: vi.fn(), restartApp: vi.fn() }));
+vi.mock('@/data/eraseAll', () => erase);
+
 const summary = {
   counts: { tasks: 3, notes: 1, documents: 2 },
   files: 2,
@@ -162,5 +166,34 @@ describe('backup & data', () => {
     await setSetting('lastBackupAt', clock.now() - 3 * 86_400_000);
     renderSettings();
     await waitFor(() => expect(screen.getByText('Last backup 3 days ago.')).toBeInTheDocument());
+  });
+
+  it('deletes everything only after confirming, then starts fresh', async () => {
+    const user = userEvent.setup();
+    renderSettings();
+    await user.click(await screen.findByRole('button', { name: 'Delete everything' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Delete everything on this device?' });
+    expect(dialog).toHaveTextContent("You haven't made a backup.");
+
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(erase.eraseAllData).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Delete everything' }));
+    const again = await screen.findByRole('dialog', { name: 'Delete everything on this device?' });
+    await user.click(within(again).getByRole('button', { name: 'Delete everything' }));
+    await waitFor(() => expect(erase.restartApp).toHaveBeenCalled());
+    expect(erase.eraseAllData).toHaveBeenCalledOnce();
+  });
+
+  it('says so if something could not be erased, and stays put', async () => {
+    const user = userEvent.setup();
+    erase.eraseAllData.mockRejectedValueOnce(new Error('locked'));
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    renderSettings();
+    await user.click(await screen.findByRole('button', { name: 'Delete everything' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Delete everything on this device?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Delete everything' }));
+    expect(await screen.findByText(/Some data couldn't be erased/)).toBeInTheDocument();
+    expect(erase.restartApp).not.toHaveBeenCalled();
   });
 });

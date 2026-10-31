@@ -8,8 +8,11 @@
 #   img-src blob: data:        previews of your own files (object URLs) and icons.
 #   worker-src blob:           file workers (hashing, PDF) are same-origin; blob: as backup.
 #   connect-src 'self'         the app never contacts any other server.
+# Strict-Transport-Security: browsers only ever use HTTPS for this site from then on. No
+# includeSubDomains/preload: those would also bind other sites on the same domain.
 
 /*
+  Strict-Transport-Security: max-age=31536000
   Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self'; worker-src 'self' blob:; manifest-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY

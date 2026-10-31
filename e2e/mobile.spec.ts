@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from './fixtures';
 
 async function waitForServiceWorker(page: Page) {
@@ -53,6 +54,17 @@ test(
     });
 
     await expect(page).toHaveURL(/\/library$/);
+    // Any website could send this request, so nothing is added until the user says so.
+    const dialog = page.getByRole('dialog', { name: 'Add 2 shared files?' });
+    await expect(dialog.getByText('Shared lecture.pdf')).toBeVisible();
+    await expect(page.getByRole('link', { name: /Shared lecture/ })).toHaveCount(0);
+    // This dialog needs the service worker, so it's audited here rather than in a11y.spec.ts.
+    await page.waitForTimeout(400); // let the dialog finish fading in
+    const axe = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .analyze();
+    expect(axe.violations.map((v) => v.id)).toEqual([]);
+    await dialog.getByRole('button', { name: 'Add to Library' }).click();
     await expect(page.getByRole('link', { name: /Shared lecture/ })).toBeVisible();
     await expect(page.getByRole('link', { name: /Shopping/ })).toBeVisible();
     // The service worker's temporary cache is emptied once imported.

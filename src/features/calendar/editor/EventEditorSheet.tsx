@@ -20,6 +20,7 @@ import {
   moveStart,
   newDraft,
   reminderOptions,
+  setAllDay,
   type EventDraft,
 } from '../eventDraft';
 import { useEventEditor } from '../eventEditorStore';
@@ -157,10 +158,7 @@ function EventForm({
           checked={draft.allDay}
           onChange={(e) => {
             const allDay = e.target.checked;
-            setDraft((d) => {
-              const keep = reminderOptions(allDay).some((o) => o.value === d.reminder);
-              return { ...d, allDay, reminder: keep ? d.reminder : '' };
-            });
+            setDraft((d) => setAllDay(d, allDay));
           }}
         />
         <DateTimeRow

@@ -6,7 +6,8 @@ import { FilePickerButton, primaryButtonClasses } from './components/FilePickerB
 import { LibraryBrowser } from './components/LibraryBrowser';
 import { DocumentDetail } from './detail/DocumentDetail';
 import { useImportQueue } from './importStore';
-import { takeSharedFiles } from './sharedFiles';
+import { SharedFilesDialog } from './components/SharedFilesDialog';
+import { peekSharedFiles, type SharedFileInfo } from './sharedFiles';
 import {
   defaultLibraryQuery,
   folderIdOfView,
@@ -28,10 +29,11 @@ export default function LibraryPage() {
   const data = useLibraryData();
   const enqueue = useImportQueue((s) => s.enqueue);
 
-  // Files shared into the app (Android share target) arrive as /library?shared=N.
+  // Files shared into the app (Android share target) arrive as /library?shared=N. They're
+  // only imported once the user confirms; any left waiting are offered again on each visit.
   const shared = params.get('shared');
+  const [sharedWaiting, setSharedWaiting] = useState<SharedFileInfo[]>([]);
   useEffect(() => {
-    if (!shared) return;
     let cancelled = false;
     void (async () => {
       if (shared === 'error') {
@@ -39,16 +41,16 @@ export default function LibraryPage() {
           tone: 'error',
           message: "The shared files couldn't be received. Try adding them here.",
         });
-      } else {
-        const files = await takeSharedFiles();
-        if (!cancelled && files.length) useImportQueue.getState().enqueue(files);
       }
-      if (!cancelled) setParams({}, { replace: true });
+      const waiting = await peekSharedFiles().catch(() => []);
+      if (cancelled) return;
+      setSharedWaiting(waiting);
+      if (shared) setParams({}, { replace: true });
     })();
     return () => {
       cancelled = true;
     };
-    // Runs when a share arrives; setParams is stable.
+    // Runs on opening and when a share arrives; setParams is stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shared]);
   const [dragging, setDragging] = useState(false);
@@ -146,6 +148,9 @@ export default function LibraryPage() {
             Drop files to add them
           </p>
         </div>
+      )}
+      {sharedWaiting.length > 0 && (
+        <SharedFilesDialog files={sharedWaiting} onClose={() => setSharedWaiting([])} />
       )}
     </>
   );

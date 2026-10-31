@@ -125,19 +125,34 @@ export async function listTrash(): Promise<TrashItem[]> {
 export const restoreFromTrash = (item: Pick<TrashItem, 'type' | 'id'>) =>
   sourceFor(item.type).restore(item.id);
 
-export const deleteForever = (item: Pick<TrashItem, 'type' | 'id'>) =>
-  sourceFor(item.type).purge(item.id);
+const purge = (item: Pick<TrashItem, 'type' | 'id'>) => sourceFor(item.type).purge(item.id);
+
+/**
+ * The safety copies taken before a restore may still hold what the user just erased, so
+ * erasing on purpose removes them too ("erased for good" must be true).
+ */
+const forgetSnapshots = async () => (await import('./backup/snapshots')).deleteAllSnapshots();
+
+/** Erases one item for good, at the user's request. */
+export async function deleteForever(item: Pick<TrashItem, 'type' | 'id'>): Promise<void> {
+  await purge(item);
+  await forgetSnapshots();
+}
 
 export async function emptyTrash(): Promise<number> {
   const items = await listTrash();
-  for (const item of items) await deleteForever(item);
+  for (const item of items) await purge(item);
+  await forgetSnapshots();
   return items.length;
 }
 
-/** Erases items that have been in the Trash longer than the retention period. Runs at startup. */
+/**
+ * Erases items that have been in the Trash longer than the retention period. Runs at
+ * startup. Snapshots are left alone here: they expire on their own within a week.
+ */
 export async function purgeExpiredTrash(now = clock.now()): Promise<number> {
   const items = await listTrash();
   const expired = items.filter((i) => i.expiresAt <= now);
-  for (const item of expired) await deleteForever(item);
+  for (const item of expired) await purge(item);
   return expired.length;
 }

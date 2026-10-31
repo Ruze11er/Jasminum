@@ -101,6 +101,7 @@ test('the deploy files are served with the build', async ({ page }) => {
   expect(headers).toContain('Content-Security-Policy:');
   expect(headers).toContain("frame-ancestors 'none'");
   expect(headers).toContain('X-Content-Type-Options: nosniff');
+  expect(headers).toContain('Strict-Transport-Security: max-age=31536000');
   const redirects = await (await page.request.get('/_redirects')).text();
   expect(redirects).toMatch(/\/\*\s+\/index\.html\s+200/);
 });

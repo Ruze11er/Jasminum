@@ -190,6 +190,18 @@ describe('notes page', () => {
     await waitFor(() => expect(localStorage.getItem(`jasminum:note-draft:${n.id}`)).toBeNull());
   });
 
+  it('erases a leftover draft when its note is erased for good', async () => {
+    const n = await notesRepo.create({ title: 'Private' });
+    localStorage.setItem(
+      `jasminum:note-draft:${n.id}`,
+      JSON.stringify({ at: n.updatedAt + 1000, patch: { title: 'Private thoughts' } }),
+    );
+    await notesRepo.softDelete(n.id);
+    expect(localStorage.getItem(`jasminum:note-draft:${n.id}`)).not.toBeNull(); // still restorable
+    await notesRepo.purge(n.id);
+    expect(localStorage.getItem(`jasminum:note-draft:${n.id}`)).toBeNull();
+  });
+
   it('ignores a backup older than the saved note', async () => {
     const n = await notesRepo.create({ title: 'Newer' });
     localStorage.setItem(

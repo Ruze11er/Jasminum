@@ -28,6 +28,9 @@ const SAFE_INLINE: Record<string, string> = {
 
 export const canOpenInTab = (ext: string) => ext in SAFE_INLINE;
 
+/** Where the service worker parks files shared into the app (public/share-target-sw.js). */
+export const SHARE_CACHE = 'jasminum-share-target';
+
 /** Opens the file in a new tab with a safe content type. Returns false if not allowed. */
 export function openInTab(blob: Blob, ext: string): boolean {
   const type = SAFE_INLINE[ext];

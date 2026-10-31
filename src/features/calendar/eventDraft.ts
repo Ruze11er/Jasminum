@@ -132,6 +132,27 @@ export function moveStart(
   return { ...next, endDate: end.date, endTime: end.time };
 }
 
+/**
+ * Switches between all-day and timed. A timed event that ends at midnight doesn't use
+ * the next day, so as an all-day event it ends the day before: otherwise the late-evening
+ * default (23:00–00:00) would turn into a two-day event. Switching back to timed gives an
+ * end that comes before the start one hour instead.
+ */
+export function setAllDay(draft: EventDraft, allDay: boolean): EventDraft {
+  const keep = reminderOptions(allDay).some((o) => o.value === draft.reminder);
+  const next = { ...draft, allDay, reminder: keep ? draft.reminder : '' };
+  if (!next.startDate || !next.endDate) return next;
+  if (allDay && draft.endTime === '00:00' && draft.endDate > draft.startDate) {
+    next.endDate = addLocalDays(draft.endDate, -1);
+  }
+  if (!allDay && next.startTime && next.endTime && durationMinutes(next) <= 0) {
+    const end = addMinutes(next.startDate, next.startTime, 60);
+    next.endDate = end.date;
+    next.endTime = end.time;
+  }
+  return next;
+}
+
 export interface ReminderOption {
   value: string;
   label: string;

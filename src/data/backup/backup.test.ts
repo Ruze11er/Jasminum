@@ -2,7 +2,7 @@
 // Node has real Blob/File streams, which backups and the file store need.
 import { describe, expect, it } from 'vitest';
 import { strToU8, zipSync } from 'fflate';
-import { clock } from '@/lib/clock';
+import { clock, DAY_MS } from '@/lib/clock';
 import { db } from '../db';
 import { importFile } from '../files/importer';
 import { getFileStore } from '../files';
@@ -20,7 +20,9 @@ import { createEncryptor, decryptChunks } from './crypto';
 import { createBackupBlob } from './exportBackup';
 import { BackupError, TABLE_NAMES, keyOf, tableOf } from './format';
 import { applyBackup, readBackup } from './restore';
-import { listSnapshots, restoreSnapshot, saveSnapshot } from './snapshots';
+import { listSnapshots, pruneSnapshots, restoreSnapshot, saveSnapshot } from './snapshots';
+import { eraseAllData } from '../eraseAll';
+import { deleteForever, emptyTrash, purgeExpiredTrash } from '../trash';
 
 const FAST = 1000; // PBKDF2 rounds for tests (real backups use 600,000)
 
@@ -276,6 +278,55 @@ describe('snapshots', () => {
       await saveSnapshot('test');
     }
     expect((await listSnapshots()).map((s) => s.at)).toEqual([5000, 4000, 3000]);
+  });
+
+  it('expire after a week', async () => {
+    clock.set(1 * DAY_MS);
+    await saveSnapshot('old');
+    clock.set(5 * DAY_MS);
+    await saveSnapshot('recent');
+    expect(await pruneSnapshots(8 * DAY_MS)).toBe(1);
+    expect((await listSnapshots()).map((s) => s.at)).toEqual([5 * DAY_MS]);
+  });
+
+  it('are erased when something is deleted for good, so it leaves no copy behind', async () => {
+    const tag = await tagsRepo.ensure('Secret');
+    await tagsRepo.softDelete(tag.id);
+    await saveSnapshot('test');
+    await deleteForever({ type: 'tag', id: tag.id });
+    expect(await listSnapshots()).toEqual([]);
+
+    const other = await tagsRepo.ensure('Also secret');
+    await tagsRepo.softDelete(other.id);
+    await saveSnapshot('test');
+    await emptyTrash();
+    expect(await listSnapshots()).toEqual([]);
+  });
+
+  it('are kept when the Trash expires on its own (they expire within a week anyway)', async () => {
+    const tag = await tagsRepo.ensure('Old');
+    clock.set(DAY_MS);
+    await tagsRepo.softDelete(tag.id);
+    clock.set(40 * DAY_MS);
+    await saveSnapshot('test');
+    expect(await purgeExpiredTrash()).toBe(1);
+    expect(await listSnapshots()).toHaveLength(1);
+  });
+});
+
+describe('delete everything', () => {
+  it('erases the database, stored files and snapshots', async () => {
+    const { doc } = await seed();
+    await saveSnapshot('test');
+    const store = await getFileStore();
+    expect(await store.has(doc.storageKey)).toBe(true);
+
+    await eraseAllData();
+    await db.open();
+    for (const name of TABLE_NAMES) expect(await tableOf(name).count()).toBe(0);
+    // Node has no OPFS, so files live in the database's fallback table, erased with it.
+    expect(store.kind).toBe('idb');
+    expect(await store.keys()).toEqual([]);
   });
 });
 

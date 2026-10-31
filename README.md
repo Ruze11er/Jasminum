@@ -30,7 +30,7 @@ Jasminum is a set of static files: `npm run build` puts everything in `dist/`. T
 
 **Recommended: Cloudflare Pages or Netlify.** Both read the two deploy files in `public/` (copied into `dist/`):
 
-- `_headers` sets the security headers (Content-Security-Policy, no framing, no referrer, locked-down permissions) and the caching rules. The policy is also copied into `index.html` at build time, so it applies even where headers can't be set.
+- `_headers` sets the security headers (Content-Security-Policy, HTTPS only (HSTS), no framing, no referrer, locked-down permissions) and the caching rules. The policy is also copied into `index.html` at build time, so it applies even where headers can't be set.
 - `_redirects` sends every app route (like `/notes/…`) to `index.html`.
 
 Setup on either host:
@@ -38,7 +38,8 @@ Setup on either host:
 1. Create a project from this GitHub repository.
 2. Build command: `npm run build`. Output folder: `dist`. Node version: 24 (read from `.node-version`).
 3. Add your custom domain in the host's domain settings. HTTPS is set up automatically, and the app needs it: service workers and installing only work over HTTPS.
+4. Pick one address and keep it. Browsers keep each user's data per address, so `www.example.com` and `example.com` count as two separate apps, and moving to a new domain later leaves everyone's data behind (they'd need a backup to move it). Redirect every other form of the address to the one you chose, from the first day.
 
-**GitHub Pages** also works, with two limits: it ignores `_headers` (only the `<meta>` policy applies, without `frame-ancestors`), and app routes need a copy of `index.html` saved as `404.html`.
+**GitHub Pages** isn't recommended for a public release: it ignores `_headers`, so there's no HSTS and no `frame-ancestors` (only the `<meta>` policy applies), and app routes need a copy of `index.html` saved as `404.html`.
 
 After each deploy, open the live URL once online. The app then works offline, and existing users see "A new version is ready" instead of a surprise reload.

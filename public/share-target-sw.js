@@ -4,7 +4,8 @@
  * When someone shares files to Jasminum ("Share → Jasminum"), the system opens the app
  * with a POST to /share-target. There is no server, so the service worker receives it:
  * it keeps the files in a private cache and sends the app to /library?shared=1, where
- * the page imports them (src/features/library/sharedFiles.ts) and empties the cache.
+ * the page asks before importing them (src/features/library/sharedFiles.ts). Any website
+ * can POST here too, so nothing is imported without that confirmation.
  *
  * Plain JS on purpose: it's loaded with importScripts() by the generated service worker.
  */

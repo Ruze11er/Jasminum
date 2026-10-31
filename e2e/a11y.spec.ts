@@ -244,6 +244,14 @@ for (const scheme of ['light', 'dark'] as const) {
       await page.getByRole('button', { name: 'Back up now' }).click();
       await expect(page.getByRole('dialog', { name: 'Back up your data' })).toBeVisible();
       await audit(page, 'backup dialog', found);
+      await page.keyboard.press('Escape');
+
+      await page.getByRole('button', { name: 'Delete everything' }).click();
+      await expect(
+        page.getByRole('dialog', { name: 'Delete everything on this device?' }),
+      ).toBeVisible();
+      await audit(page, 'delete everything dialog', found);
+      await page.keyboard.press('Escape');
 
       expect(found, found.join('\n')).toEqual([]);
     },

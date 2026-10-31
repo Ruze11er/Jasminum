@@ -1,4 +1,4 @@
-import type { NoteInput } from '@/data/repos/notes';
+import { noteDraftKey as key, type NoteInput } from '@/data/repos/notes';
 
 /**
  * Crash safety for the note editor. Database writes are asynchronous, so a save started
@@ -6,8 +6,6 @@ import type { NoteInput } from '@/data/repos/notes';
  * changes are also written here synchronously (localStorage), and replayed the next time
  * the note opens if they are newer than the saved note.
  */
-
-const key = (noteId: string) => `jasminum:note-draft:${noteId}`;
 
 export interface DraftBackup {
   at: number;

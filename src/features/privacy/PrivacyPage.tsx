@@ -76,9 +76,12 @@ export default function PrivacyPage() {
             <Link to="/trash" className="font-semibold text-link underline">
               Trash
             </Link>{' '}
-            and are erased for good after 30 days, or straight away if you empty it. To erase
-            everything, clear this site's data in your browser settings or uninstall the app. Make a
-            backup first if you might want it back.
+            and are erased for good after 30 days, or straight away if you empty it. Before a
+            restore, the app keeps a safety copy of your data so the restore can be undone. That
+            copy is erased after 7 days, or as soon as you erase something for good. To erase
+            everything, use <strong>Settings → Backup &amp; data → Delete everything</strong>, or
+            clear this site's data in your browser settings. Make a backup first if you might want
+            it back.
           </p>
         </Section>
 

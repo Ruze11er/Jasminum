@@ -38,11 +38,22 @@ export function noteTitle(n: Pick<Note, 'title' | 'contentText'>): string {
 export type NoteInput = z.input<typeof noteSchema>;
 type NoteFields = z.output<typeof noteSchema>;
 
+/** localStorage key of a note's crash-safety draft (features/notes/editor/draftBackup.ts). */
+export const noteDraftKey = (noteId: string) => `jasminum:note-draft:${noteId}`;
+
 const base = createRepository<Note, NoteFields, NoteInput>({
   entityType: 'note',
   table: () => db.notes,
   schema: noteSchema,
   toSearch: (n) => ({ title: n.title, body: n.contentText }),
+  // An erased note must not survive as an unsaved draft.
+  afterPurge: async (n) => {
+    try {
+      localStorage.removeItem(noteDraftKey(n.id));
+    } catch {
+      // No localStorage (private mode or tests in Node): there's no draft either.
+    }
+  },
 });
 
 /**
