@@ -2,9 +2,11 @@ import type { Table } from 'dexie';
 import { clock, DAY_MS } from '@/lib/clock';
 import { categoriesRepo } from './repos/categories';
 import { eventsRepo } from './repos/events';
+import { foldersRepo } from './repos/folders';
+import { notesRepo, noteTitle } from './repos/notes';
 import { tagsRepo } from './repos/tags';
 import { tasksRepo } from './repos/tasks';
-import type { BaseEntity, EntityType } from './types';
+import type { BaseEntity, EntityType, Note } from './types';
 import { db } from './db';
 
 export const TRASH_RETENTION_DAYS = 30;
@@ -40,6 +42,22 @@ export const trashSources: TrashSource[] = [
     title: (e) => (e as unknown as { title: string }).title,
     restore: eventsRepo.restore,
     purge: eventsRepo.purge,
+  },
+  {
+    type: 'note',
+    label: 'Note',
+    table: () => db.notes as unknown as Table<BaseEntity, string>,
+    title: (e) => noteTitle(e as unknown as Note),
+    restore: notesRepo.restore,
+    purge: notesRepo.purge,
+  },
+  {
+    type: 'folder',
+    label: 'Folder',
+    table: () => db.folders as unknown as Table<BaseEntity, string>,
+    title: named,
+    restore: foldersRepo.restore,
+    purge: foldersRepo.purge,
   },
   {
     type: 'tag',

@@ -54,5 +54,8 @@ export default defineConfig({
     css: false,
     // UI tests that type and click can exceed the 5s default when the machine is busy.
     testTimeout: 15_000,
+    // Each worker runs its own jsdom. The default (one per CPU core) runs out of memory
+    // on an 8 GB machine and makes lazy-loaded pages miss their timeouts.
+    maxWorkers: 4,
   },
 });

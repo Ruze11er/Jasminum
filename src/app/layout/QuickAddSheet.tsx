@@ -26,7 +26,7 @@ const actions: { label: string; hint: string; icon: LucideIcon; to: string; tone
     label: 'Note',
     hint: 'Write it down',
     icon: SquarePen,
-    to: '/notes',
+    to: '/notes/new',
     tone: 'bg-mint/50 text-mint-fg dark:bg-mint/15 dark:text-mint',
   },
   {

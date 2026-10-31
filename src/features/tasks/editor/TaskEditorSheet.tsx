@@ -16,6 +16,7 @@ import { CategoryPicker } from './CategoryPicker';
 import { ChecklistEditor } from './ChecklistEditor';
 import { RepeatPicker } from './RepeatPicker';
 import { TagInput } from './TagInput';
+import { LinkedNotes } from '@/features/notes/LinkedNotes';
 
 interface Draft {
   title: string;
@@ -294,6 +295,8 @@ function TaskForm({
           />
         )}
       </Field>
+
+      {task && <LinkedNotes item={{ type: 'task', id: task.id }} onOpen={onDone} />}
 
       {/* Sticky so Save is always reachable in a long form. */}
       <div className="sticky -bottom-4 z-10 -mx-5 flex flex-wrap items-center gap-2 border-t border-line bg-surface-raised px-5 pt-3 pb-4 md:-bottom-6 md:-mx-6 md:px-6 md:pb-6">

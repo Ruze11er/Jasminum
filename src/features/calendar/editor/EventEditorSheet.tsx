@@ -12,6 +12,7 @@ import { firstIssue } from '@/lib/validation';
 import { CategoryPicker } from '@/features/tasks/editor/CategoryPicker';
 import { RepeatPicker } from '@/features/tasks/editor/RepeatPicker';
 import { TagInput } from '@/features/tasks/editor/TagInput';
+import { LinkedNotes } from '@/features/notes/LinkedNotes';
 import { deleteEvent, deleteOccurrence } from '../eventActions';
 import {
   draftFromEvent,
@@ -258,6 +259,8 @@ function EventForm({
       {repeating && (
         <p className="text-sm text-fg-muted">Changes apply to every repeat of this event.</p>
       )}
+
+      {event && <LinkedNotes item={{ type: 'event', id: event.id }} onOpen={onDone} />}
 
       {/* Sticky so Save is always reachable in a long form. */}
       <div className="sticky -bottom-4 z-10 -mx-5 flex flex-wrap items-center gap-2 border-t border-line bg-surface-raised px-5 pt-3 pb-4 md:-bottom-6 md:-mx-6 md:px-6 md:pb-6">
