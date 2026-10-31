@@ -34,7 +34,7 @@ export function Checkbox({ label, strikeWhenChecked, className, id, ...props }: 
           className={cn(
             'text-fg transition-colors',
             strikeWhenChecked &&
-              'group-has-[:checked]:text-fg-subtle group-has-[:checked]:line-through',
+              'group-has-[:checked]:text-fg-muted group-has-[:checked]:line-through',
           )}
         >
           {label}

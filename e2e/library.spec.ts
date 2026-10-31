@@ -29,93 +29,102 @@ function makePdf(): Buffer {
 /** The "Add files" input in the page header. */
 const addFilesInput = (page: Page) => page.getByLabel('Add files').first();
 
-test('importing 50 files and one over 100 MB keeps the page responsive', async ({
-  page,
-}, testInfo) => {
-  test.slow();
-  const dir = testInfo.outputPath('import');
-  mkdirSync(dir, { recursive: true });
+test(
+  'importing 50 files and one over 100 MB keeps the page responsive',
+  { tag: '@files' },
+  async ({ page }, testInfo) => {
+    test.slow();
+    const dir = testInfo.outputPath('import');
+    mkdirSync(dir, { recursive: true });
 
-  // One 110 MB file (written in chunks, never held in memory) and 50 small ones.
-  const big = join(dir, 'Big textbook.pdf');
-  const fd = openSync(big, 'w');
-  const chunk = Buffer.alloc(1024 * 1024, 7);
-  for (let i = 0; i < 110; i++) writeSync(fd, chunk);
-  closeSync(fd);
-  const small = Array.from({ length: 50 }, (_, i) => {
-    const path = join(dir, `Worksheet ${String(i + 1).padStart(2, '0')}.txt`);
-    writeFileSync(path, `Worksheet number ${i + 1}\n`);
-    return path;
-  });
+    // One 110 MB file (written in chunks, never held in memory) and 50 small ones.
+    const big = join(dir, 'Big textbook.pdf');
+    const fd = openSync(big, 'w');
+    const chunk = Buffer.alloc(1024 * 1024, 7);
+    for (let i = 0; i < 110; i++) writeSync(fd, chunk);
+    closeSync(fd);
+    const small = Array.from({ length: 50 }, (_, i) => {
+      const path = join(dir, `Worksheet ${String(i + 1).padStart(2, '0')}.txt`);
+      writeFileSync(path, `Worksheet number ${i + 1}\n`);
+      return path;
+    });
 
-  await page.goto('/library');
-  // Record any main-thread task that blocks the page for long.
-  await page.evaluate(() => {
-    (window as unknown as { longest: number }).longest = 0;
-    new PerformanceObserver((list) => {
-      for (const e of list.getEntries()) {
-        const w = window as unknown as { longest: number };
-        w.longest = Math.max(w.longest, e.duration);
-      }
-    }).observe({ type: 'longtask', buffered: false });
-  });
+    await page.goto('/library');
+    // Record any main-thread task that blocks the page for long.
+    await page.evaluate(() => {
+      (window as unknown as { longest: number }).longest = 0;
+      new PerformanceObserver((list) => {
+        for (const e of list.getEntries()) {
+          const w = window as unknown as { longest: number };
+          w.longest = Math.max(w.longest, e.duration);
+        }
+      }).observe({ type: 'longtask', buffered: false });
+    });
 
-  await addFilesInput(page).setInputFiles([big, ...small]);
-  await expect(page.getByText(/Adding files…/)).toBeVisible();
+    await addFilesInput(page).setInputFiles([big, ...small]);
+    await expect(page.getByText(/Adding files…/)).toBeVisible();
 
-  // While the big file is being processed, the page still reacts straight away.
-  const recent = page.getByRole('button', { name: /^Recent\s*\d/ });
-  await recent.click();
-  await expect(recent).toHaveAttribute('aria-pressed', 'true', { timeout: 1000 });
-  await page.getByRole('button', { name: /^All files/ }).click();
+    // While the big file is being processed, the page still reacts straight away.
+    const recent = page.getByRole('button', { name: /^Recent\s*\d/ });
+    await recent.click();
+    await expect(recent).toHaveAttribute('aria-pressed', 'true', { timeout: 1000 });
+    await page.getByRole('button', { name: /^All files/ }).click();
 
-  await expect(page.getByRole('region', { name: 'Adding files' })).toContainText('51 files added', {
-    timeout: 120_000,
-  });
-  await expect(page.getByRole('list', { name: 'Files' }).getByRole('link')).toHaveCount(51);
-  const longest = await page.evaluate(() => (window as unknown as { longest: number }).longest);
-  expect(longest).toBeLessThan(500);
-
-  // Found in two interactions: type, then open.
-  await page.getByLabel('Search files').fill('worksheet 37');
-  await page.getByRole('link', { name: /Worksheet 37/ }).click();
-  await expect(page.getByLabel('File contents')).toContainText('Worksheet number 37');
-});
-
-test('drop a PDF, preview it, and keep it available offline', async ({ page, context }) => {
-  await page.goto('/library');
-  await expect(page.getByText('Your library is empty')).toBeVisible();
-
-  // Drag and drop a PDF onto the page.
-  const pdf = makePdf().toString('base64');
-  await page.evaluate((b64) => {
-    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-    const dt = new DataTransfer();
-    dt.items.add(new File([bytes], 'Hello.pdf', { type: 'application/pdf' }));
-    document.body.dispatchEvent(new DragEvent('dragenter', { bubbles: true, dataTransfer: dt }));
-    document.body.dispatchEvent(
-      new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }),
+    await expect(page.getByRole('region', { name: 'Adding files' })).toContainText(
+      '51 files added',
+      {
+        timeout: 120_000,
+      },
     );
-  }, pdf);
-  await page.getByRole('link', { name: /Hello/ }).click();
+    await expect(page.getByRole('list', { name: 'Files' }).getByRole('link')).toHaveCount(51);
+    const longest = await page.evaluate(() => (window as unknown as { longest: number }).longest);
+    expect(longest).toBeLessThan(500);
 
-  // pdf.js renders the page.
-  await expect(page.getByText('Page 1 of 1')).toBeVisible();
-  const canvas = page.getByRole('img', { name: 'Hello, page 1' });
-  await expect.poll(async () => (await canvas.boundingBox())?.height ?? 0).toBeGreaterThan(50);
-  const url = page.url();
+    // Found in two interactions: type, then open.
+    await page.getByLabel('Search files').fill('worksheet 37');
+    await page.getByRole('link', { name: /Worksheet 37/ }).click();
+    await expect(page.getByLabel('File contents')).toContainText('Worksheet number 37');
+  },
+);
 
-  // Offline: the app, the file and the PDF engine all come from this device.
-  await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));
-  await page.reload();
-  await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
-  await context.route('**/*', (route) => route.abort('internetdisconnected'));
-  await page.goto(url);
-  await expect(page.getByText('Page 1 of 1')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Download' })).toBeVisible();
-});
+test(
+  'drop a PDF, preview it, and keep it available offline',
+  { tag: '@files' },
+  async ({ page, context }) => {
+    await page.goto('/library');
+    await expect(page.getByText('Your library is empty')).toBeVisible();
 
-test('a note links to a file, and the file shows the note', async ({ page }) => {
+    // Drag and drop a PDF onto the page.
+    const pdf = makePdf().toString('base64');
+    await page.evaluate((b64) => {
+      const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      const dt = new DataTransfer();
+      dt.items.add(new File([bytes], 'Hello.pdf', { type: 'application/pdf' }));
+      document.body.dispatchEvent(new DragEvent('dragenter', { bubbles: true, dataTransfer: dt }));
+      document.body.dispatchEvent(
+        new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }),
+      );
+    }, pdf);
+    await page.getByRole('link', { name: /Hello/ }).click();
+
+    // pdf.js renders the page.
+    await expect(page.getByText('Page 1 of 1')).toBeVisible();
+    const canvas = page.getByRole('img', { name: 'Hello, page 1' });
+    await expect.poll(async () => (await canvas.boundingBox())?.height ?? 0).toBeGreaterThan(50);
+    const url = page.url();
+
+    // Offline: the app, the file and the PDF engine all come from this device.
+    await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));
+    await page.reload();
+    await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+    await context.route('**/*', (route) => route.abort('internetdisconnected'));
+    await page.goto(url);
+    await expect(page.getByText('Page 1 of 1')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Download' })).toBeVisible();
+  },
+);
+
+test('a note links to a file, and the file shows the note', { tag: '@files' }, async ({ page }) => {
   await page.goto('/library');
   await addFilesInput(page).setInputFiles({
     name: 'Syllabus.txt',

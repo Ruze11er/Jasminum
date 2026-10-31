@@ -5,6 +5,9 @@
  */
 import * as z from 'zod/mini';
 
+// The Content-Security-Policy forbids eval, so Zod must not compile schemas at runtime.
+z.config({ jitless: true });
+
 export { z };
 
 /** Any schema: `Schema<Output, Input>`. */

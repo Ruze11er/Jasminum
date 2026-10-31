@@ -21,8 +21,10 @@ test('create a repeating event, page through months and keep it after reload', a
 
   // Every week next month has a lesson.
   await page.getByRole('button', { name: 'Next month' }).click();
-  await expect(page.getByRole('button', { name: /, 1 item$/ })).not.toHaveCount(0);
-  expect(await page.getByRole('button', { name: /, 1 item$/ }).count()).toBeGreaterThanOrEqual(4);
+  // Poll: right after the click the old month can still be on screen.
+  await expect
+    .poll(() => page.getByRole('button', { name: /, 1 item$/ }).count())
+    .toBeGreaterThanOrEqual(4);
 
   // Tapping a day shows its agenda below the grid.
   await page

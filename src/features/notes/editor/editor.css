@@ -67,15 +67,16 @@
 }
 .note-content ul[data-type='taskList'] li > label {
   flex: none;
-  margin-top: 0.3em;
+  margin-top: 0.1em;
 }
 .note-content ul[data-type='taskList'] li > div {
   flex: 1;
   min-width: 0;
 }
 .note-content ul[data-type='taskList'] input[type='checkbox'] {
-  width: 1.1rem;
-  height: 1.1rem;
+  /* 24px: the minimum touch target (WCAG 2.2). */
+  width: 1.5rem;
+  height: 1.5rem;
   accent-color: var(--primary);
   cursor: pointer;
 }

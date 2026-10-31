@@ -1,0 +1,3 @@
+# Single-page app: every path is handled by index.html (Cloudflare Pages and Netlify).
+# Real files (assets, icons, sw.js) are served first; this only catches app routes.
+/*    /index.html   200

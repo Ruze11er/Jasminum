@@ -8,7 +8,7 @@ const variants: Record<Variant, string> = {
   primary: 'bg-primary text-on-primary shadow-soft-sm hover:bg-primary-hover',
   secondary: 'bg-primary-soft text-primary-soft-fg hover:bg-primary-soft-hover',
   ghost: 'text-fg-muted hover:bg-surface-muted hover:text-fg',
-  danger: 'bg-danger text-white shadow-soft-sm hover:brightness-95',
+  danger: 'bg-danger text-on-danger shadow-soft-sm hover:brightness-95',
 };
 
 // Touch targets stay at least 44px tall on small screens.

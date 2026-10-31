@@ -102,7 +102,15 @@ export default function NotesPage() {
   );
 
   // Phone, note open: the editor is the whole screen.
-  if (!desktop && noteId) return editor;
+  // (The title is an input, so a hidden heading names the page for screen readers.)
+  if (!desktop && noteId) {
+    return (
+      <>
+        <h1 className="sr-only">Note</h1>
+        {editor}
+      </>
+    );
+  }
 
   return (
     <>

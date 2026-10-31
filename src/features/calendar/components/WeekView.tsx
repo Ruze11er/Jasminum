@@ -113,7 +113,7 @@ function WeekColumn({
                 className={cn(
                   'w-full rounded-lg px-2 py-1 text-left text-xs font-semibold transition-shadow hover:shadow-soft-md',
                   color,
-                  !event && item.task.status === 'done' && 'line-through opacity-70',
+                  !event && item.task.status === 'done' && 'line-through',
                 )}
               >
                 {item.time && <span className="block font-bold">{timeLabel(item.time)}</span>}

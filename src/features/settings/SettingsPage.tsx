@@ -73,6 +73,13 @@ export default function SettingsPage() {
             </div>
           </dl>
           <Link
+            to="/privacy"
+            className="mt-2 flex items-center justify-between rounded-xl px-1 py-2.5 font-semibold text-link hover:underline"
+          >
+            Privacy
+            <ChevronRight className="size-4" aria-hidden="true" />
+          </Link>
+          <Link
             to="/design"
             className="mt-2 flex items-center justify-between rounded-xl px-1 py-2.5 font-semibold text-link hover:underline"
           >

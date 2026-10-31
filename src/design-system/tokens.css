@@ -24,13 +24,15 @@
   --brand: #e85a8a;
   --link: #b02a5b;
   --ring: #ffccdd;
-  --success: #2e9e6b;
+  /* Status colors are dark enough for text on white and on their -soft backgrounds (AA). */
+  --success: #1f7a52;
   --success-soft: #e3f6ec;
-  --warning: #b8740f;
+  --warning: #9a6008;
   --warning-soft: #fdf1dc;
-  --danger: #d93a4a;
+  --danger: #c02a3a;
+  --on-danger: #ffffff;
   --danger-soft: #fde6e8;
-  --info: #4f7fe0;
+  --info: #3563c4;
   --info-soft: #e5edfc;
   --shadow-color: 176 42 91;
   /* Chart marks (single series). Validated with the dataviz checks against --surface. */
@@ -64,6 +66,7 @@
   --warning: #f0b55a;
   --warning-soft: #3d2e17;
   --danger: #ff7b88;
+  --on-danger: #2a1e24;
   --danger-soft: #45222a;
   --info: #8eb0f5;
   --info-soft: #222f4a;
@@ -96,6 +99,7 @@
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
   --color-danger: var(--danger);
+  --color-on-danger: var(--on-danger);
   --color-danger-soft: var(--danger-soft);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);

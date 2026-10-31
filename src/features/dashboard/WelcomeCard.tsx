@@ -1,12 +1,13 @@
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
-import { CheckCircle2, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, Sparkles, Trash2 } from 'lucide-react';
 import { Button, Card, Input, Sparkle, toast } from '@/design-system';
 import { setSetting, useSetting } from '@/data/repos/settings';
 import { clock } from '@/lib/clock';
 import { firstIssue } from '@/lib/validation';
 import { isStoragePersisted, requestPersistentStorage } from '@/platform/storage';
 import { InstallSteps } from '@/features/install/InstallSteps';
+import { addSamples, removeSamples } from '@/features/onboarding/sampleActions';
 
 function Step({
   n,
@@ -40,11 +41,12 @@ function Step({
 
 /**
  * First-run welcome on Home: a gentle checklist (name, install, protect storage, where
- * data lives) instead of a blocking wizard. Hidden for good once finished or skipped.
+ * data lives, optional examples) instead of a blocking wizard. Hidden for good once finished or skipped.
  */
 export function WelcomeCard() {
   const onboarding = useSetting('onboarding');
   const profile = useSetting('profile');
+  const sample = useSetting('sampleData');
   const [name, setName] = useState('');
   const [persisted, setPersisted] = useState<boolean | null>(null);
   const nameId = useId();
@@ -137,8 +139,39 @@ export function WelcomeCard() {
             <Link to="/settings?backup=1" className="font-semibold text-link underline">
               backup
             </Link>{' '}
-            now and then to keep it safe or move it to another device.
+            now and then to keep it safe or move it to another device. Read the{' '}
+            <Link to="/privacy" className="font-semibold text-link underline">
+              privacy promise
+            </Link>
+            .
           </p>
+        </Step>
+
+        <Step n={5} title="Look around with examples (optional)" done={!!sample}>
+          {sample ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm text-fg-muted">
+                A few example tasks, events and a note are in. They have the “Sample” tag.
+              </p>
+              <Button
+                size="sm"
+                variant="ghost"
+                icon={<Trash2 />}
+                onClick={() => void removeSamples()}
+              >
+                Remove examples
+              </Button>
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={<Sparkles />}
+              onClick={() => void addSamples()}
+            >
+              Add examples
+            </Button>
+          )}
         </Step>
       </ol>
 

@@ -46,6 +46,8 @@ test('Home shows today’s progress', async ({ page }) => {
     await expect(page.getByRole('button', { name: `Edit task: ${title}` })).toBeVisible();
   }
   await page.getByRole('checkbox', { name: 'Complete: Pay bills' }).check();
+  // The box ticks instantly; the toast shows once the change is saved.
+  await expect(page.getByText('Task done')).toBeVisible();
 
   await page.goto('/');
   await expect(page.getByRole('img', { name: '1 of 2 tasks done today' })).toBeVisible();

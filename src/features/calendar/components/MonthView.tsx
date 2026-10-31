@@ -133,7 +133,7 @@ function DayPreview({ items, data }: { items: CalendarItem[]; data: CalendarData
             className={cn(
               'truncate rounded-md px-1.5 py-0.5 text-xs font-semibold',
               color(item),
-              item.kind === 'task' && item.task.status === 'done' && 'line-through opacity-70',
+              item.kind === 'task' && item.task.status === 'done' && 'line-through',
             )}
           >
             {item.title}

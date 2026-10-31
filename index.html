@@ -14,16 +14,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Jasminum" />
     <title>Jasminum</title>
-    <script>
-      // Apply the saved theme before first paint so there is no flash of the wrong theme.
-      try {
-        var s = JSON.parse(localStorage.getItem('jasminum-ui') || '{}').state;
-        var t = (s && s.theme) || 'system';
-        var dark =
-          t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
-        if (dark) document.documentElement.classList.add('dark');
-      } catch (e) {}
-    </script>
+    <!-- Applies the saved theme before first paint (a file, not inline, for the CSP). -->
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>

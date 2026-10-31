@@ -134,7 +134,7 @@ export function TaskItem({
           aria-label={`Edit task: ${task.title}`}
         >
           <span
-            className={cn('block font-semibold break-words', done && 'text-fg-subtle line-through')}
+            className={cn('block font-semibold break-words', done && 'text-fg-muted line-through')}
           >
             {task.title}
           </span>

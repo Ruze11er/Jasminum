@@ -1,5 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Playwright's WebKit build for Windows can't store files (no OPFS, no Blobs in IndexedDB)
+// and blocks reloads while offline. Real Safari can, and so does WebKit on macOS and Linux,
+// so only this combination skips the tests tagged @files and @offline.
+const limitedWebKit = process.platform === 'win32' ? /@files|@offline/ : undefined;
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -17,5 +22,8 @@ export default defineConfig({
   projects: [
     { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'] } },
     { name: 'mobile-chromium', use: { ...devices['Pixel 7'] } },
+    // Cross-browser: Firefox on desktop, Safari's engine on an iPhone-sized screen.
+    { name: 'desktop-firefox', use: { ...devices['Desktop Firefox'] } },
+    { name: 'mobile-webkit', use: { ...devices['iPhone 14'] }, grepInvert: limitedWebKit },
   ],
 });

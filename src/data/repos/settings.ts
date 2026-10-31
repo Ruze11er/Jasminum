@@ -76,6 +76,11 @@ export const settingDefinitions = {
       lockAfterMinutes: 0 | 1 | 5 | 15;
     } | null,
   },
+  /** Example items added from the welcome card. They all carry this tag, so they can be removed. */
+  sampleData: {
+    schema: z.nullable(z.object({ tagId: z.string().check(z.maxLength(60)) })),
+    defaultValue: null as { tagId: string } | null,
+  },
   /** Recently shown quote ids, newest first, so quotes don't repeat too soon. */
   recentQuoteIds: {
     schema: z.array(z.string().check(z.maxLength(60))).check(z.maxLength(200)),

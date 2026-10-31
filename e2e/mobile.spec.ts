@@ -24,39 +24,47 @@ test('the manifest offers a share target and shortcuts', async ({ page }) => {
   expect(manifest.icons.some((i: { purpose?: string }) => i.purpose === 'maskable')).toBe(true);
 });
 
-test('files shared into the app (Android share target) land in the library', async ({ page }) => {
-  await page.goto('/library');
-  await waitForServiceWorker(page);
+test(
+  'files shared into the app (Android share target) land in the library',
+  { tag: '@files' },
+  async ({ page }) => {
+    await page.goto('/library');
+    await waitForServiceWorker(page);
 
-  // Exactly what Android does: a form POST navigation to /share-target with the files.
-  await page.evaluate(() => {
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '/share-target';
-    form.enctype = 'multipart/form-data';
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.name = 'files';
-    input.multiple = true;
-    const dt = new DataTransfer();
-    dt.items.add(new File(['%PDF-1.4 shared'], 'Shared lecture.pdf', { type: 'application/pdf' }));
-    dt.items.add(new File(['Milk, eggs'], 'Shopping.txt', { type: 'text/plain' }));
-    input.files = dt.files;
-    form.append(input);
-    document.body.append(form);
-    form.submit();
-  });
+    // Exactly what Android does: a form POST navigation to /share-target with the files.
+    await page.evaluate(() => {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/share-target';
+      form.enctype = 'multipart/form-data';
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.name = 'files';
+      input.multiple = true;
+      const dt = new DataTransfer();
+      dt.items.add(
+        new File(['%PDF-1.4 shared'], 'Shared lecture.pdf', { type: 'application/pdf' }),
+      );
+      dt.items.add(new File(['Milk, eggs'], 'Shopping.txt', { type: 'text/plain' }));
+      input.files = dt.files;
+      form.append(input);
+      document.body.append(form);
+      form.submit();
+    });
 
-  await expect(page).toHaveURL(/\/library$/);
-  await expect(page.getByRole('link', { name: /Shared lecture/ })).toBeVisible();
-  await expect(page.getByRole('link', { name: /Shopping/ })).toBeVisible();
-  // The service worker's temporary cache is emptied once imported.
-  await expect
-    .poll(() =>
-      page.evaluate(async () => (await (await caches.open('jasminum-share-target')).keys()).length),
-    )
-    .toBe(0);
-});
+    await expect(page).toHaveURL(/\/library$/);
+    await expect(page.getByRole('link', { name: /Shared lecture/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Shopping/ })).toBeVisible();
+    // The service worker's temporary cache is emptied once imported.
+    await expect
+      .poll(() =>
+        page.evaluate(
+          async () => (await (await caches.open('jasminum-share-target')).keys()).length,
+        ),
+      )
+      .toBe(0);
+  },
+);
 
 test('the app lock survives a reload and needs the PIN', async ({ page }) => {
   await page.goto('/settings');

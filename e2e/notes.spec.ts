@@ -60,7 +60,7 @@ test('link a note to a task and open it from the task', async ({ page }) => {
   await expect(page.getByLabel('Title')).toHaveValue('Lab notes');
 });
 
-test('notes open and save offline', async ({ page, context }) => {
+test('notes open and save offline', { tag: '@offline' }, async ({ page, context }) => {
   await page.goto('/notes/new');
   await page.getByLabel('Title').fill('Offline ideas');
   await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}/);

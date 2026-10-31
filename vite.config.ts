@@ -1,9 +1,59 @@
 /// <reference types="vitest/config" />
+import { readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
+
+/**
+ * Copies the Content-Security-Policy from public/_headers into index.html as a <meta> tag
+ * (production builds only: the dev server needs inline scripts for hot reload). Directives
+ * a <meta> tag can't use are left to the real header.
+ */
+function cspMeta(): Plugin {
+  return {
+    name: 'jasminum-csp-meta',
+    apply: 'build',
+    transformIndexHtml(html) {
+      const headers = readFileSync(new URL('./public/_headers', import.meta.url), 'utf8');
+      const line = headers
+        .split(/\r?\n/)
+        .find((l) => l.trim().startsWith('Content-Security-Policy:'));
+      if (!line) throw new Error('No Content-Security-Policy in public/_headers');
+      const policy = line
+        .split(':')
+        .slice(1)
+        .join(':')
+        .split(';')
+        .map((d) => d.trim())
+        .filter(
+          (d) => d && !/^(frame-ancestors|upgrade-insecure-requests|report-uri|sandbox)\b/.test(d),
+        )
+        .join('; ');
+      return html.replace(
+        '<meta charset="UTF-8" />',
+        `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${policy}" />`,
+      );
+    },
+  };
+}
+
+/**
+ * Drops the old .woff fallback from the self-hosted font CSS. Every browser that can run
+ * the app reads .woff2, and only .woff2 is stored for offline use: Firefox sometimes
+ * falls back to .woff when a reload interrupts a font load, which would then fail offline.
+ */
+function woff2Only(): Plugin {
+  return {
+    name: 'jasminum-woff2-only',
+    enforce: 'pre',
+    transform(code, id) {
+      if (!/@fontsource[\\/].+\.css($|\?)/.test(id)) return null;
+      return code.replace(/,\s*url\([^)]+\.woff\)\s*format\(['"]woff['"]\)/g, '');
+    },
+  };
+}
 
 export default defineConfig({
   define: {
@@ -13,6 +63,8 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
   plugins: [
+    cspMeta(),
+    woff2Only(),
     react(),
     tailwindcss(),
     VitePWA({

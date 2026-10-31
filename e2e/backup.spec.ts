@@ -60,100 +60,104 @@ function makePdf(): Buffer {
   return Buffer.from(out, 'latin1');
 }
 
-test('export → wipe → restore gives identical data and files', async ({ page }, testInfo) => {
-  test.slow();
+test(
+  'export → wipe → restore gives identical data and files',
+  { tag: '@files' },
+  async ({ page }, testInfo) => {
+    test.slow();
 
-  // Some of everything: a tagged task, an event, a note and a PDF.
-  await page.goto('/tasks');
-  await page.getByLabel('Add a task').fill('Revise chapter 2 #biology');
-  await page.getByLabel('Add a task').press('Enter');
-  await expect(page.getByRole('button', { name: 'Edit task: Revise chapter 2' })).toBeVisible();
+    // Some of everything: a tagged task, an event, a note and a PDF.
+    await page.goto('/tasks');
+    await page.getByLabel('Add a task').fill('Revise chapter 2 #biology');
+    await page.getByLabel('Add a task').press('Enter');
+    await expect(page.getByRole('button', { name: 'Edit task: Revise chapter 2' })).toBeVisible();
 
-  await page.goto('/calendar');
-  await page.getByRole('button', { name: 'Add event on Today' }).click();
-  const eventForm = page.getByRole('dialog', { name: 'New event' });
-  await eventForm.getByLabel('Title').fill('Biology exam');
-  await eventForm.getByText('All day').click();
-  await eventForm.getByRole('button', { name: 'Add event' }).click();
-  await expect(eventForm).toBeHidden();
+    await page.goto('/calendar');
+    await page.getByRole('button', { name: 'Add event on Today' }).click();
+    const eventForm = page.getByRole('dialog', { name: 'New event' });
+    await eventForm.getByLabel('Title').fill('Biology exam');
+    await eventForm.getByText('All day').click();
+    await eventForm.getByRole('button', { name: 'Add event' }).click();
+    await expect(eventForm).toBeHidden();
 
-  await page.goto('/notes/new');
-  await page.getByLabel('Title').fill('Exam plan');
-  await page.getByLabel('Title').press('Enter');
-  await page.keyboard.type('Start with photosynthesis.');
-  await expect(page.getByText(/^Edited/)).toBeVisible();
+    await page.goto('/notes/new');
+    await page.getByLabel('Title').fill('Exam plan');
+    await page.getByLabel('Title').press('Enter');
+    await page.keyboard.type('Start with photosynthesis.');
+    await expect(page.getByText(/^Edited/)).toBeVisible();
 
-  await page.goto('/library');
-  await page.getByLabel('Add files').first().setInputFiles({
-    name: 'Lecture.pdf',
-    mimeType: 'application/pdf',
-    buffer: makePdf(),
-  });
-  await expect(page.getByRole('link', { name: /Lecture/ })).toBeVisible();
-
-  // Back up, protected with a passphrase. (Loading a page logs "app opened", so the state
-  // is recorded here, right before the backup.)
-  await page.goto('/settings');
-  await expect(page.getByRole('button', { name: 'Back up now' })).toBeVisible();
-  const before = await deviceState(page);
-  expect(before.tables.tasks).toHaveLength(1);
-  expect(Object.keys(before.files)).toHaveLength(1);
-  await page.getByRole('button', { name: 'Back up now' }).click();
-  const backupDialog = page.getByRole('dialog', { name: 'Back up your data' });
-  await backupDialog.getByText('Protect with a passphrase').click();
-  await backupDialog.getByLabel('Passphrase', { exact: true }).fill('pink jasmine');
-  await backupDialog.getByLabel('Type it again').fill('pink jasmine');
-  await backupDialog.getByRole('button', { name: 'Create backup' }).click();
-  await expect(backupDialog.getByText(/Backup ready/)).toBeVisible({ timeout: 30_000 });
-  const downloading = page.waitForEvent('download');
-  await backupDialog.getByRole('button', { name: 'Download backup' }).click();
-  const download = await downloading;
-  expect(download.suggestedFilename()).toMatch(/^jasminum-backup-\d{4}-\d{2}-\d{2}\.jasminum$/);
-  const backupPath = testInfo.outputPath('backup.jasminum');
-  await download.saveAs(backupPath);
-
-  // Wipe this device: the database and every stored file.
-  await page.evaluate(async () => {
-    await new Promise<void>((resolve, reject) => {
-      const req = indexedDB.deleteDatabase('jasminum');
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
+    await page.goto('/library');
+    await page.getByLabel('Add files').first().setInputFiles({
+      name: 'Lecture.pdf',
+      mimeType: 'application/pdf',
+      buffer: makePdf(),
     });
-    const root = await navigator.storage.getDirectory();
-    for await (const [name] of root as unknown as AsyncIterable<[string, unknown]>) {
-      await root.removeEntry(name, { recursive: true });
-    }
-  });
-  await page.goto('/tasks');
-  await page.getByRole('radio', { name: /^All/ }).click();
-  await expect(page.getByRole('button', { name: /^Edit task:/ })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: /Lecture/ })).toBeVisible();
 
-  // Restore it.
-  await page.goto('/settings');
-  await page.getByLabel('Restore from file').setInputFiles(backupPath);
-  const restoreDialog = page.getByRole('dialog', { name: 'Restore from backup' });
-  await restoreDialog.getByLabel('Passphrase').fill('pink jasmine');
-  await restoreDialog.getByRole('button', { name: 'Unlock' }).click();
-  await expect(restoreDialog.getByText(/1 task · 1 event · 1 note · 1 file/)).toBeVisible({
-    timeout: 30_000,
-  });
-  await restoreDialog.getByText('Replace everything', { exact: true }).click();
-  await restoreDialog.getByRole('button', { name: 'Replace everything' }).click();
-  await expect(page.getByText('Backup restored')).toBeVisible();
+    // Back up, protected with a passphrase. (Loading a page logs "app opened", so the state
+    // is recorded here, right before the backup.)
+    await page.goto('/settings');
+    await expect(page.getByRole('button', { name: 'Back up now' })).toBeVisible();
+    const before = await deviceState(page);
+    expect(before.tables.tasks).toHaveLength(1);
+    expect(Object.keys(before.files)).toHaveLength(1);
+    await page.getByRole('button', { name: 'Back up now' }).click();
+    const backupDialog = page.getByRole('dialog', { name: 'Back up your data' });
+    await backupDialog.getByText('Protect with a passphrase').click();
+    await backupDialog.getByLabel('Passphrase', { exact: true }).fill('pink jasmine');
+    await backupDialog.getByLabel('Type it again').fill('pink jasmine');
+    await backupDialog.getByRole('button', { name: 'Create backup' }).click();
+    await expect(backupDialog.getByText(/Backup ready/)).toBeVisible({ timeout: 30_000 });
+    const downloading = page.waitForEvent('download');
+    await backupDialog.getByRole('button', { name: 'Download backup' }).click();
+    const download = await downloading;
+    expect(download.suggestedFilename()).toMatch(/^jasminum-backup-\d{4}-\d{2}-\d{2}\.jasminum$/);
+    const backupPath = testInfo.outputPath('backup.jasminum');
+    await download.saveAs(backupPath);
 
-  // Identical data and files.
-  const after = await deviceState(page);
-  expect(after).toEqual(before);
+    // Wipe this device: the database and every stored file.
+    await page.evaluate(async () => {
+      await new Promise<void>((resolve, reject) => {
+        const req = indexedDB.deleteDatabase('jasminum');
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+      const root = await navigator.storage.getDirectory();
+      for await (const [name] of root as unknown as AsyncIterable<[string, unknown]>) {
+        await root.removeEntry(name, { recursive: true });
+      }
+    });
+    await page.goto('/tasks');
+    await page.getByRole('radio', { name: /^All/ }).click();
+    await expect(page.getByRole('button', { name: /^Edit task:/ })).toHaveCount(0);
 
-  // And it all works: the PDF previews and the note is searchable.
-  await page.goto('/library');
-  await page.getByRole('link', { name: /Lecture/ }).click();
-  await expect(page.getByText('Page 1 of 1')).toBeVisible();
-  await page.keyboard.press('Control+k');
-  await page.getByRole('combobox', { name: 'Search everything' }).fill('photosynthesis');
-  await page.getByRole('option', { name: /Exam plan/ }).click();
-  await expect(page.getByLabel('Title')).toHaveValue('Exam plan');
-});
+    // Restore it.
+    await page.goto('/settings');
+    await page.getByLabel('Restore from file').setInputFiles(backupPath);
+    const restoreDialog = page.getByRole('dialog', { name: 'Restore from backup' });
+    await restoreDialog.getByLabel('Passphrase').fill('pink jasmine');
+    await restoreDialog.getByRole('button', { name: 'Unlock' }).click();
+    await expect(restoreDialog.getByText(/1 task · 1 event · 1 note · 1 file/)).toBeVisible({
+      timeout: 30_000,
+    });
+    await restoreDialog.getByText('Replace everything', { exact: true }).click();
+    await restoreDialog.getByRole('button', { name: 'Replace everything' }).click();
+    await expect(page.getByText('Backup restored')).toBeVisible();
+
+    // Identical data and files.
+    const after = await deviceState(page);
+    expect(after).toEqual(before);
+
+    // And it all works: the PDF previews and the note is searchable.
+    await page.goto('/library');
+    await page.getByRole('link', { name: /Lecture/ }).click();
+    await expect(page.getByText('Page 1 of 1')).toBeVisible();
+    await page.keyboard.press('Control+k');
+    await page.getByRole('combobox', { name: 'Search everything' }).fill('photosynthesis');
+    await page.getByRole('option', { name: /Exam plan/ }).click();
+    await expect(page.getByLabel('Title')).toHaveValue('Exam plan');
+  },
+);
 
 test('notes export as Markdown and tasks as CSV', async ({ page }) => {
   await page.goto('/tasks');

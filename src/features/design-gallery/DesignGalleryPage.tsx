@@ -69,7 +69,7 @@ export default function DesignGalleryPage() {
               <div key={name} className="text-center text-xs">
                 <div className="h-12 rounded-xl border border-line" style={{ background: hex }} />
                 <p className="mt-1 font-semibold">{name.replace('pink-', '')}</p>
-                <p className="text-fg-subtle">{hex}</p>
+                <p className="text-fg-muted">{hex}</p>
               </div>
             ))}
           </div>

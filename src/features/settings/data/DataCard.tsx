@@ -7,6 +7,7 @@ import {
   FileText,
   RotateCcw,
   ShieldCheck,
+  Sparkles,
   Trash2,
   Upload,
 } from 'lucide-react';
@@ -16,6 +17,8 @@ import { clock } from '@/lib/clock';
 import { formatRelative } from '@/lib/format';
 import { downloadFile } from '@/platform/share';
 import { FilePickerButton } from '@/features/library/components/FilePickerButton';
+import { removeSamples } from '@/features/onboarding/sampleActions';
+import { TransferGuide } from './TransferGuide';
 
 // Backup, restore and the integrity check pull in zip and crypto code: loaded on first use.
 const BackupDialog = lazy(() => import('./BackupDialog'));
@@ -39,9 +42,13 @@ function Row({ title, text, children }: { title: string; text: ReactNode; childr
   );
 }
 
-/** Settings → Backup & data: back up, restore, undo a restore, exports, integrity, Trash. */
+/**
+ * Settings → Backup & data: back up, restore, undo a restore, moving devices, exports,
+ * integrity, removing the examples, Trash.
+ */
 export function DataCard() {
   const lastBackupAt = useSetting('lastBackupAt');
+  const sample = useSetting('sampleData');
   // ?backup=1 (e.g. from the backup reminder insight) opens the backup dialog straight away.
   const [params, setParams] = useSearchParams();
   const [open, setOpen] = useState<Open>(() => (params.get('backup') ? 'backup' : null));
@@ -124,6 +131,8 @@ export function DataCard() {
           )}
         </Row>
 
+        <TransferGuide />
+
         <Row title="Export" text="Readable copies for other apps. Not a backup.">
           <Button
             variant="secondary"
@@ -148,6 +157,19 @@ export function DataCard() {
             Check now
           </Button>
         </Row>
+
+        {sample && (
+          <Row title="Examples" text="The sample tasks, events and note from the welcome card.">
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Sparkles />}
+              onClick={() => void removeSamples()}
+            >
+              Remove examples
+            </Button>
+          </Row>
+        )}
 
         <div className="pt-2">
           <Link

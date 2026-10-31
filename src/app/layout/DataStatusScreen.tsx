@@ -25,7 +25,7 @@ export function DataStatusScreen() {
           }
           action={<Button onClick={() => window.location.reload()}>Reload</Button>}
         />
-        {error && <p className="mt-2 text-center text-xs break-words text-fg-subtle">{error}</p>}
+        {error && <p className="mt-2 text-center text-xs break-words text-fg-muted">{error}</p>}
       </div>
     </div>
   );
