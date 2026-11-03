@@ -11,7 +11,9 @@ import { UpdatePrompt } from './UpdatePrompt';
 import { DataStatusScreen } from './DataStatusScreen';
 import { LockScreen } from './AppLock';
 import { useAppLock } from './useAppLock';
+import { PrivacyGate } from './PrivacyGate';
 import { WelcomeSplash } from './WelcomeSplash';
+import { welcomeWillShow } from './welcomeSession';
 import { Toaster } from '@/design-system';
 import { AppleInstallBanner } from '@/features/install/AppleInstallBanner';
 
@@ -71,6 +73,8 @@ export function AppShell() {
   const paletteOpen = useUiStore((s) => s.paletteOpen);
   const [paletteLoaded, setPaletteLoaded] = useState(false);
   if (paletteOpen && !paletteLoaded) setPaletteLoaded(true);
+  // The privacy agreement waits under the welcome splash until it has gone.
+  const [welcomeGone, setWelcomeGone] = useState(() => !welcomeWillShow());
 
   return (
     <div className="min-h-dvh md:flex">
@@ -117,7 +121,9 @@ export function AppShell() {
       </Toaster>
       <DataStatusScreen />
       {lock.locked && <LockScreen record={lock.record} />}
-      <WelcomeSplash />
+      {/* Unlock first: the lock is only on if someone already uses the app here. */}
+      {!lock.locked && <PrivacyGate ready={welcomeGone} />}
+      <WelcomeSplash onGone={() => setWelcomeGone(true)} />
       <ScrollRestoration />
     </div>
   );

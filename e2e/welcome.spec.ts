@@ -1,5 +1,13 @@
 // Uses the plain Playwright test (not ./fixtures), so the welcome splash shows.
 import { expect, test } from '@playwright/test';
+import { PRIVACY_POLICY_VERSION } from '../src/features/privacy/version';
+
+// The privacy agreement would follow the splash; privacy.spec.ts tests the two together.
+test.beforeEach(async ({ context }) => {
+  await context.addInitScript((version) => {
+    localStorage.setItem('jasminum:privacy-accepted', JSON.stringify({ version, at: 0 }));
+  }, PRIVACY_POLICY_VERSION);
+});
 
 test('the welcome splash shows on open, fades into Home and stays away on reload', async ({
   page,

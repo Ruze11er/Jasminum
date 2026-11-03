@@ -1,20 +1,12 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { LogoMark } from '../Logo';
 import './welcome.css';
+import { WELCOME_SEEN_KEY, welcomeWillShow } from './welcomeSession';
 
-/** Set once the welcome has shown in this tab, so reloads (e.g. after an update) skip it. */
-export const WELCOME_SEEN_KEY = 'jasminum:welcome-seen';
+export { WELCOME_SEEN_KEY };
 export const WELCOME_TAGLINE = 'Your days, gently organized.';
 export const WELCOME_SHOW_MS = 4000;
 export const WELCOME_FADE_MS = 500;
-
-function firstOpenThisSession() {
-  try {
-    return sessionStorage.getItem(WELCOME_SEEN_KEY) !== '1';
-  } catch {
-    return true;
-  }
-}
 
 // x (vw), size (px), duration (s), start offset (s), sideways drift (vw), spin (deg).
 const PETALS: [number, number, number, number, number, number][] = [
@@ -48,9 +40,9 @@ function Petal({ style }: { style: CSSProperties }) {
  * moving background. It fades into the app on its own; a tap or key press skips it.
  * It's decoration only (hidden from screen readers), and the app loads behind it.
  */
-export function WelcomeSplash() {
+export function WelcomeSplash({ onGone }: { onGone?: () => void } = {}) {
   const [phase, setPhase] = useState<'shown' | 'leaving' | 'gone'>(() =>
-    firstOpenThisSession() ? 'shown' : 'gone',
+    welcomeWillShow() ? 'shown' : 'gone',
   );
 
   useEffect(() => {
@@ -60,6 +52,12 @@ export function WelcomeSplash() {
     } catch {
       // Private mode: it shows again on reload, which is harmless.
     }
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase === 'gone') onGone?.();
+    // Only when the phase changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
   useEffect(() => {
