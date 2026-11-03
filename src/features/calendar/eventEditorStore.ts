@@ -15,6 +15,8 @@ interface EventEditorState {
   /** The occurrence that was tapped, for "delete this event only" on repeating events. */
   occurrenceDate: LocalDate | null;
   defaults: EventDefaults;
+  /** Goes up on every open, so the form can tell a fresh load from the previous one. */
+  session: number;
   openNew: (defaults?: EventDefaults) => void;
   openEdit: (eventId: string, occurrenceDate?: LocalDate) => void;
   close: () => void;
@@ -26,8 +28,22 @@ export const useEventEditor = create<EventEditorState>((set) => ({
   eventId: null,
   occurrenceDate: null,
   defaults: {},
-  openNew: (defaults = {}) => set({ open: true, eventId: null, occurrenceDate: null, defaults }),
+  session: 0,
+  openNew: (defaults = {}) =>
+    set((s) => ({
+      open: true,
+      eventId: null,
+      occurrenceDate: null,
+      defaults,
+      session: s.session + 1,
+    })),
   openEdit: (eventId, occurrenceDate) =>
-    set({ open: true, eventId, occurrenceDate: occurrenceDate ?? null, defaults: {} }),
+    set((s) => ({
+      open: true,
+      eventId,
+      occurrenceDate: occurrenceDate ?? null,
+      defaults: {},
+      session: s.session + 1,
+    })),
   close: () => set({ open: false }),
 }));

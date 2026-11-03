@@ -37,61 +37,72 @@ interface Loaded {
   tags: Tag[];
 }
 
-/** Create/edit form for a task, opened through `useTaskEditor`. Loaded lazily. */
-export default function TaskEditorSheet() {
-  const { open, taskId, defaults, close } = useTaskEditor();
-
-  // Load once per opened task; the form keeps its own draft from then on.
-  const loaded = useLiveQuery(async (): Promise<Loaded | null> => {
-    const [categories, tags] = await Promise.all([
-      db.categories
-        .orderBy('order')
-        .filter((c) => !c.deletedAt)
-        .toArray(),
-      db.tags
-        .orderBy('normalizedName')
-        .filter((t) => !t.deletedAt)
-        .toArray(),
-    ]);
-    if (!taskId) {
-      return {
-        task: null,
-        categories,
-        tags,
-        draft: {
-          title: defaults.title ?? '',
-          description: '',
-          dueDate: defaults.dueDate ?? '',
-          dueTime: '',
-          priority: (defaults.priority as Priority | undefined) ?? 0,
-          categoryId: defaults.categoryId ?? null,
-          tagNames: [],
-          repeat: repeatFromRule(null),
-          checklist: [],
-        },
-      };
-    }
-    const task = await db.tasks.get(taskId);
-    if (!task) return null;
-    const items = await tasksRepo.checklist(task.id);
-    const tagById = new Map(tags.map((t) => [t.id, t.name]));
+async function loadTask(
+  taskId: string | null,
+  defaults: Partial<TaskInput>,
+): Promise<Loaded | null> {
+  const [categories, tags] = await Promise.all([
+    db.categories
+      .orderBy('order')
+      .filter((c) => !c.deletedAt)
+      .toArray(),
+    db.tags
+      .orderBy('normalizedName')
+      .filter((t) => !t.deletedAt)
+      .toArray(),
+  ]);
+  if (!taskId) {
     return {
-      task,
+      task: null,
       categories,
       tags,
       draft: {
-        title: task.title,
-        description: task.description,
-        dueDate: task.dueDate ?? '',
-        dueTime: task.dueTime ?? '',
-        priority: task.priority,
-        categoryId: task.categoryId,
-        tagNames: task.tagIds.map((id) => tagById.get(id)).filter((n): n is string => !!n),
-        repeat: repeatFromRule(task.rrule),
-        checklist: items.map((i) => ({ id: i.id, text: i.text, done: !!i.done })),
+        title: defaults.title ?? '',
+        description: '',
+        dueDate: defaults.dueDate ?? '',
+        dueTime: '',
+        priority: (defaults.priority as Priority | undefined) ?? 0,
+        categoryId: defaults.categoryId ?? null,
+        tagNames: [],
+        repeat: repeatFromRule(null),
+        checklist: [],
       },
     };
-  }, [taskId, defaults]);
+  }
+  const task = await db.tasks.get(taskId);
+  if (!task) return null;
+  const items = await tasksRepo.checklist(task.id);
+  const tagById = new Map(tags.map((t) => [t.id, t.name]));
+  return {
+    task,
+    categories,
+    tags,
+    draft: {
+      title: task.title,
+      description: task.description,
+      dueDate: task.dueDate ?? '',
+      dueTime: task.dueTime ?? '',
+      priority: task.priority,
+      categoryId: task.categoryId,
+      tagNames: task.tagIds.map((id) => tagById.get(id)).filter((n): n is string => !!n),
+      repeat: repeatFromRule(task.rrule),
+      checklist: items.map((i) => ({ id: i.id, text: i.text, done: !!i.done })),
+    },
+  };
+}
+
+/** Create/edit form for a task, opened through `useTaskEditor`. Loaded lazily. */
+export default function TaskEditorSheet() {
+  const { open, taskId, defaults, session, close } = useTaskEditor();
+
+  // Load once per opened task; the form keeps its own draft from then on.
+  const result = useLiveQuery(
+    async () => ({ session, data: await loadTask(taskId, defaults) }),
+    [session, taskId, defaults],
+  );
+  // useLiveQuery keeps returning the previous open's result until the new one arrives.
+  // Showing that would fill the form with the wrong task, so wait for this open's result.
+  const loaded = result?.session === session ? result.data : undefined;
 
   return (
     <Sheet
@@ -103,8 +114,8 @@ export default function TaskEditorSheet() {
       {loaded === null ? (
         <p className="py-6 text-center text-fg-muted">This task no longer exists.</p>
       ) : loaded ? (
-        // `key` resets the form when switching between tasks.
-        <TaskForm key={taskId ?? 'new'} {...loaded} onDone={close} />
+        // A fresh form for every open, so no draft carries over.
+        <TaskForm key={session} {...loaded} onDone={close} />
       ) : null}
     </Sheet>
   );

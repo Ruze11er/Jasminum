@@ -23,7 +23,7 @@ import {
   setAllDay,
   type EventDraft,
 } from '../eventDraft';
-import { useEventEditor } from '../eventEditorStore';
+import { useEventEditor, type EventDefaults } from '../eventEditorStore';
 
 interface Loaded {
   event: CalendarEvent | null;
@@ -32,28 +32,36 @@ interface Loaded {
   tags: Tag[];
 }
 
+async function loadEvent(eventId: string | null, defaults: EventDefaults): Promise<Loaded | null> {
+  const [categories, tags] = await Promise.all([
+    db.categories
+      .orderBy('order')
+      .filter((c) => !c.deletedAt)
+      .toArray(),
+    db.tags
+      .orderBy('normalizedName')
+      .filter((t) => !t.deletedAt)
+      .toArray(),
+  ]);
+  if (!eventId) return { event: null, categories, tags, draft: newDraft(defaults, clock.now()) };
+  const event = await db.events.get(eventId);
+  if (!event || event.deletedAt) return null;
+  const tagById = new Map(tags.map((t) => [t.id, t.name]));
+  const tagNames = event.tagIds.map((id) => tagById.get(id)).filter((n): n is string => !!n);
+  return { event, categories, tags, draft: draftFromEvent(event, tagNames) };
+}
+
 /** Create/edit form for a calendar event, opened through `useEventEditor`. Loaded lazily. */
 export default function EventEditorSheet() {
-  const { open, eventId, occurrenceDate, defaults, close } = useEventEditor();
+  const { open, eventId, occurrenceDate, defaults, session, close } = useEventEditor();
 
-  const loaded = useLiveQuery(async (): Promise<Loaded | null> => {
-    const [categories, tags] = await Promise.all([
-      db.categories
-        .orderBy('order')
-        .filter((c) => !c.deletedAt)
-        .toArray(),
-      db.tags
-        .orderBy('normalizedName')
-        .filter((t) => !t.deletedAt)
-        .toArray(),
-    ]);
-    if (!eventId) return { event: null, categories, tags, draft: newDraft(defaults, clock.now()) };
-    const event = await db.events.get(eventId);
-    if (!event || event.deletedAt) return null;
-    const tagById = new Map(tags.map((t) => [t.id, t.name]));
-    const tagNames = event.tagIds.map((id) => tagById.get(id)).filter((n): n is string => !!n);
-    return { event, categories, tags, draft: draftFromEvent(event, tagNames) };
-  }, [eventId, defaults]);
+  const result = useLiveQuery(
+    async () => ({ session, data: await loadEvent(eventId, defaults) }),
+    [session, eventId, defaults],
+  );
+  // useLiveQuery keeps returning the previous open's result until the new one arrives.
+  // Showing that would fill the form with the wrong event, so wait for this open's result.
+  const loaded = result?.session === session ? result.data : undefined;
 
   return (
     <Sheet
@@ -65,12 +73,7 @@ export default function EventEditorSheet() {
       {loaded === null ? (
         <p className="py-6 text-center text-fg-muted">This event no longer exists.</p>
       ) : loaded ? (
-        <EventForm
-          key={eventId ?? 'new'}
-          {...loaded}
-          occurrenceDate={occurrenceDate}
-          onDone={close}
-        />
+        <EventForm key={session} {...loaded} occurrenceDate={occurrenceDate} onDone={close} />
       ) : null}
     </Sheet>
   );

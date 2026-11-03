@@ -227,3 +227,97 @@ describe('quick add', () => {
     expect(await screen.findByRole('dialog', { name: 'New event' })).toBeInTheDocument();
   });
 });
+
+// Each open must show the item or day that was just clicked, not the previous one.
+describe('opening the forms again', () => {
+  const dayView = `/calendar?view=day&date=${TODAY}`;
+  const cancel = (dialog: HTMLElement) =>
+    userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+  it('edits the second task, not the first one opened', async () => {
+    await tasksRepo.create({ title: 'Alpha', dueDate: TODAY });
+    const bravo = await tasksRepo.create({ title: 'Bravo', dueDate: TODAY, priority: 3 });
+    const user = userEvent.setup();
+    renderApp(dayView);
+    await user.click(await screen.findByRole('button', { name: 'Edit task: Alpha' }));
+    let dialog = await screen.findByRole('dialog', { name: 'Edit task' });
+    expect(await within(dialog).findByLabelText('Title')).toHaveValue('Alpha');
+    await cancel(dialog);
+
+    await user.click(await screen.findByRole('button', { name: 'Edit task: Bravo' }));
+    dialog = await screen.findByRole('dialog', { name: 'Edit task' });
+    expect(await within(dialog).findByLabelText('Title')).toHaveValue('Bravo');
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(await screen.findByText('Task saved')).toBeInTheDocument();
+    const saved = await db.tasks.get(bravo.id);
+    expect(saved?.title).toBe('Bravo');
+    expect(saved?.priority).toBe(3);
+  });
+
+  it('opens an empty new task after editing one', async () => {
+    await tasksRepo.create({ title: 'Alpha', dueDate: TODAY });
+    const user = userEvent.setup();
+    renderApp(dayView);
+    await user.click(await screen.findByRole('button', { name: 'Edit task: Alpha' }));
+    let dialog = await screen.findByRole('dialog', { name: 'Edit task' });
+    await within(dialog).findByLabelText('Title');
+    await cancel(dialog);
+
+    await user.click(await screen.findByRole('button', { name: 'Add task on Today' }));
+    dialog = await screen.findByRole('dialog', { name: 'New task' });
+    expect(await within(dialog).findByLabelText('Title')).toHaveValue('');
+    expect(within(dialog).getByLabelText('Date')).toHaveValue(TODAY);
+  });
+
+  it('loads the task after a new task was cancelled', async () => {
+    await tasksRepo.create({ title: 'Bravo', dueDate: TODAY });
+    const user = userEvent.setup();
+    renderApp(dayView);
+    await user.click(await screen.findByRole('button', { name: 'Add task on Today' }));
+    let dialog = await screen.findByRole('dialog', { name: 'New task' });
+    await within(dialog).findByLabelText('Title');
+    await cancel(dialog);
+
+    await user.click(await screen.findByRole('button', { name: 'Edit task: Bravo' }));
+    dialog = await screen.findByRole('dialog', { name: 'Edit task' });
+    expect(await within(dialog).findByLabelText('Title')).toHaveValue('Bravo');
+  });
+
+  it('uses the newly selected day for a new task and a new event', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(await screen.findByRole('button', { name: 'Add task on Today' }));
+    let dialog = await screen.findByRole('dialog', { name: 'New task' });
+    expect(await within(dialog).findByLabelText('Date')).toHaveValue(TODAY);
+    await cancel(dialog);
+    await user.click(await screen.findByRole('button', { name: 'Add event on Today' }));
+    dialog = await screen.findByRole('dialog', { name: 'New event' });
+    expect(await within(dialog).findByLabelText('Starts')).toHaveValue(TODAY);
+    await cancel(dialog);
+
+    await user.click(await day(/November 10, 2026/));
+    await user.click(await screen.findByRole('button', { name: /Add task on/ }));
+    dialog = await screen.findByRole('dialog', { name: 'New task' });
+    expect(await within(dialog).findByLabelText('Date')).toHaveValue('2026-11-10');
+    await cancel(dialog);
+    await user.click(await screen.findByRole('button', { name: /Add event on/ }));
+    dialog = await screen.findByRole('dialog', { name: 'New event' });
+    expect(await within(dialog).findByLabelText('Starts')).toHaveValue('2026-11-10');
+  });
+
+  it('edits the second event, not the first one opened', async () => {
+    const allDay = { allDay: 1 as const, start: TODAY, end: TODAY };
+    await eventsRepo.create({ title: 'Picnic', ...allDay });
+    await eventsRepo.create({ title: 'Concert', ...allDay });
+    const user = userEvent.setup();
+    renderApp(dayView);
+    await user.click(await screen.findByRole('button', { name: 'Edit event: Picnic' }));
+    let dialog = await screen.findByRole('dialog', { name: 'Edit event' });
+    expect(await within(dialog).findByLabelText('Title')).toHaveValue('Picnic');
+    await cancel(dialog);
+
+    await user.click(await screen.findByRole('button', { name: 'Edit event: Concert' }));
+    dialog = await screen.findByRole('dialog', { name: 'Edit event' });
+    expect(await within(dialog).findByLabelText('Title')).toHaveValue('Concert');
+  });
+});
