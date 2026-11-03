@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resetBadgeForTests, setAppBadge } from './badge';
+import { openExternalLink, safeLinkUrl } from './share';
 import { installMethod, listenForInstallPrompt, promptInstall, useInstallState } from './install';
 
 const setUserAgent = (ua: string, touchPoints = 0) => {
@@ -65,5 +66,37 @@ describe('app badge', () => {
 
   it('does nothing where badges are not supported', async () => {
     await expect(setAppBadge(2)).resolves.toBeUndefined();
+  });
+});
+
+describe('links from notes', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('allows web, email and phone links only', () => {
+    expect(safeLinkUrl('https://example.com/a?b=1')).toBe('https://example.com/a?b=1');
+    expect(safeLinkUrl('http://example.com')).toBe('http://example.com/');
+    expect(safeLinkUrl('mailto:hi@example.com')).toBe('mailto:hi@example.com');
+    expect(safeLinkUrl('tel:+15551234')).toBe('tel:+15551234');
+    for (const bad of [
+      'javascript:alert(1)',
+      ' JavaScript:alert(1)',
+      'data:text/html,<script>alert(1)</script>',
+      'blob:https://example.com/x',
+      'file:///etc/passwd',
+      'not a url',
+      '',
+      null,
+      undefined,
+    ]) {
+      expect(safeLinkUrl(bad)).toBeNull();
+    }
+  });
+
+  it('opens allowed links in a new tab without access back to the app', () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    expect(openExternalLink('https://example.com')).toBe(true);
+    expect(open).toHaveBeenCalledWith('https://example.com/', '_blank', 'noopener,noreferrer');
+    expect(openExternalLink('javascript:alert(1)')).toBe(false);
+    expect(open).toHaveBeenCalledTimes(1);
   });
 });

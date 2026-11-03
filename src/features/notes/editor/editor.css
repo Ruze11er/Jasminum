@@ -110,6 +110,8 @@
 .note-content a {
   color: var(--link);
   text-decoration: underline;
+  /* Clicking opens the link (NoteEditor's click handler). */
+  cursor: pointer;
 }
 
 .note-content hr {

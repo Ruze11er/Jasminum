@@ -91,3 +91,35 @@ test('keeps text typed right before a reload', async ({ page }) => {
   await page.reload(); // no waiting for the autosave
   await expect(editorText(page)).toContainText('Saved by the backup');
 });
+
+test('links in a note open in a new tab', async ({ page, context }) => {
+  // Answer for the outside site so the test never goes online.
+  await context.route('https://example.com/**', (r) =>
+    r.fulfill({ contentType: 'text/html', body: '<title>Guide</title>' }),
+  );
+  await page.goto('/notes/new');
+  await page.getByLabel('Title').fill('Reading list');
+  await page.getByLabel('Title').press('Enter');
+  await page.keyboard.type('Read https://example.com/guide today');
+  const link = editorText(page).getByRole('link', { name: 'https://example.com/guide' });
+  await expect(link).toBeVisible();
+
+  // Clicking the link opens it; the app stays on the note.
+  const opened = context.waitForEvent('page');
+  await link.click();
+  const tab = await opened;
+  await expect(tab).toHaveURL('https://example.com/guide');
+  await tab.close();
+  await expect(page).toHaveURL(/\/notes\//);
+  await expect(page.getByLabel('Title')).toHaveValue('Reading list');
+
+  // The toolbar button does the same for keyboard users, once the cursor is in a link.
+  const openButton = page.getByRole('button', { name: 'Open link' });
+  await editorText(page).press('End');
+  await expect(openButton).toBeDisabled();
+  for (let i = 0; i < 8; i++) await page.keyboard.press('ArrowLeft');
+  await expect(openButton).toBeEnabled();
+  const again = context.waitForEvent('page');
+  await openButton.click();
+  await expect(await again).toHaveURL('https://example.com/guide');
+});

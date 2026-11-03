@@ -43,6 +43,31 @@ export function openInTab(blob: Blob, ext: string): boolean {
   return true;
 }
 
+/** Link types a note may open. Anything else (javascript:, data:, blob:, …) is refused. */
+const SAFE_LINK_PROTOCOLS = new Set(['http:', 'https:', 'mailto:', 'tel:']);
+
+/** The link as a full URL if it's safe to open, otherwise null. */
+export function safeLinkUrl(href: string | null | undefined): string | null {
+  if (!href) return null;
+  try {
+    const url = new URL(href);
+    return SAFE_LINK_PROTOCOLS.has(url.protocol) ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Opens a link from user content in a new tab (an installed app hands it to the browser).
+ * 'noopener' stops the page from reaching back into the app. Returns false if not allowed.
+ */
+export function openExternalLink(href: string | null | undefined): boolean {
+  const url = safeLinkUrl(href);
+  if (!url) return false;
+  window.open(url, '_blank', 'noopener,noreferrer');
+  return true;
+}
+
 export function downloadFile(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

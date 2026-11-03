@@ -16,6 +16,7 @@ import { clock } from '@/lib/clock';
 import { cn } from '@/lib/cn';
 import { formatRelative } from '@/lib/format';
 import { firstIssue } from '@/lib/validation';
+import { openExternalLink } from '@/platform/share';
 import { TagInput } from '@/features/tasks/editor/TagInput';
 import { deleteNote } from '../noteActions';
 import { NEW_NOTE } from '../selectors';
@@ -193,7 +194,8 @@ function NoteForm({
     extensions: [
       StarterKit.configure({
         heading: { levels: [2, 3] },
-        // Only http(s), mailto and tel links are allowed (the default); clicking edits.
+        // Only http(s), mailto and tel links are allowed (the default). Clicks are handled
+        // below: Tiptap's own opener trusts the stored `target` and skips 'noopener'.
         link: { openOnClick: false, autolink: true, defaultProtocol: 'https' },
       }),
       TaskList,
@@ -207,6 +209,18 @@ function NoteForm({
         role: 'textbox',
         'aria-multiline': 'true',
         'aria-label': 'Note text',
+      },
+      handleDOMEvents: {
+        click: (view, event) => {
+          if (event.button !== 0 || event.shiftKey || event.altKey) return false;
+          const target = event.target instanceof Element ? event.target : null;
+          const link = target?.closest('a[href]');
+          if (!link || !view.dom.contains(link)) return false;
+          // Selecting part of a link by dragging shouldn't open it.
+          if (window.getSelection()?.isCollapsed === false) return false;
+          event.preventDefault();
+          return openExternalLink(link.getAttribute('href'));
+        },
       },
     },
     onUpdate: ({ editor: e }) => {

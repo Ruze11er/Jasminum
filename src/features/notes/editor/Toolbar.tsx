@@ -3,6 +3,7 @@ import { useEditorState, type Editor } from '@tiptap/react';
 import {
   Bold,
   Code,
+  ExternalLink,
   Heading2,
   Heading3,
   Italic,
@@ -16,6 +17,7 @@ import {
   Undo2,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import { openExternalLink } from '@/platform/share';
 
 interface Tool {
   label: string;
@@ -104,6 +106,15 @@ const groups: Tool[][] = [
       icon: <Code />,
       active: (e) => e.isActive('codeBlock'),
       run: (e) => e.chain().focus().toggleCodeBlock().run(),
+    },
+  ],
+  [
+    {
+      // Clicking a link opens it too; this is the keyboard and screen-reader way.
+      label: 'Open link',
+      icon: <ExternalLink />,
+      run: (e) => openExternalLink(e.getAttributes('link').href as string | undefined),
+      disabled: (e) => !e.isActive('link'),
     },
   ],
   [

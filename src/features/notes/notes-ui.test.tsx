@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
@@ -67,6 +67,43 @@ describe('notes page', () => {
     const body = await screen.findByRole('textbox', { name: 'Note text' });
     expect(body).toHaveTextContent('Pancakes need eggs');
     expect(screen.getByRole('toolbar', { name: 'Formatting' })).toBeInTheDocument();
+  });
+
+  it('opens links in the text in a new tab', async () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    const n = await notesRepo.create({
+      title: 'Reading',
+      contentJson: {
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [
+              { type: 'text', text: 'See ' },
+              {
+                type: 'text',
+                text: 'the article',
+                marks: [
+                  { type: 'link', attrs: { href: 'https://example.com/read', target: '_self' } },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      contentText: 'See the article',
+    });
+    renderApp(`/notes/${n.id}`);
+    const body = await screen.findByRole('textbox', { name: 'Note text' });
+    // Not in a link yet, so the toolbar button is off.
+    expect(screen.getByRole('button', { name: 'Open link' })).toBeDisabled();
+    // A plain click: jsdom has no layout for ProseMirror's mousedown (e2e/notes.spec.ts has the real one).
+    fireEvent.click(within(body).getByText('the article'));
+    // A stored target of _self is ignored: links never replace the app.
+    expect(open).toHaveBeenCalledWith('https://example.com/read', '_blank', 'noopener,noreferrer');
+    fireEvent.click(within(body).getByText(/See/));
+    expect(open).toHaveBeenCalledTimes(1);
+    open.mockRestore();
   });
 
   it('searches titles and text, and filters by folder', async () => {
